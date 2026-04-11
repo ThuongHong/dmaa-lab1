@@ -1,0 +1,9 @@
+,n,statistic,p_value,is_normal,distribution,skewness,kurtosis
+Age,140700,83003.7253,0.0,False,Không chuẩn,-0.218,-1.1493
+Academic Pressure,27897,18144.8181,0.0,False,Không chuẩn,-0.134,-1.1637
+Work Pressure,112782,384735.5113,0.0,False,Không chuẩn,0.0185,-1.2952
+CGPA,27898,33068.9046,0.0,False,Không chuẩn,-0.0736,-1.2292
+Study Satisfaction,27897,31766.6252,0.0,False,Không chuẩn,0.0118,-1.2256
+Job Satisfaction,112790,506866.0917,0.0,False,Không chuẩn,0.0544,-1.3049
+Work/Study Hours,140700,370083.2202,0.0,False,Không chuẩn,-0.1282,-1.2834
+Financial Stress,140696,879300.8901,0.0,False,Không chuẩn,0.0356,-1.3137

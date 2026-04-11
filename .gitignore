@@ -216,3 +216,5 @@ report/main.out
 report/main.run.xml
 report/main.synctex.gz
 report/main.toc
+
+*.png
