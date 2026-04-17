@@ -1,214 +1,67 @@
-\documentclass[conference]{IEEEtran}
+\documentclass[12pt]{article}
 
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
-\usepackage{cite}
-\usepackage{amsmath,amssymb}
-\usepackage{graphicx}
-\usepackage{booktabs}
-\usepackage{array}
-\usepackage{url}
+\usepackage{hcmus-report-template}
 
-\title{A Reproducible Data Preprocessing Pipeline for\\
-Mental Health Classification and Energy Time-Series Forecasting}
+% Disable indentation on new paragraphs
+\setlength{\parindent}{0pt}
 
-\author{%
-\IEEEauthorblockN{Khuu Hai Chau, Luu Thuong Hong, Nguyen Thien An, Le Nguyen Khang, Nguyen Ngoc Khoa}
-\IEEEauthorblockA{Faculty of Information Technology\\
-University of Science, VNU-HCM\\
-Ho Chi Minh City, Vietnam\\
-Email: \texttt{team-project@local}}
+% Line spacing 1.5
+\renewcommand{\baselinestretch}{1.5}
+
+% Optional: graphic path
+% \graphicspath{PATH_TO_GRAPHIC_FOLDER}
+
+% To use Times font family, uncomment this row
+% \usepackage{mathptmx}
+
+% To use roman section / subsection, uncomment these rows
+% \renewcommand{\thesection}{\Roman{section}}
+% \renewcommand{\thesubsection}{\thesection.\Roman{subsection}}
+% ===========================================
+
+% Define course name, report name and report title.
+\newcommand{\coursename}{Khai thác dữ liệu và ứng dụng}
+\newcommand{\reportname}{Tiền xử lý dữ liệu}
+\newcommand{\reporttitle}{Đồ án 1}
+
+\newcommand{\studentname}{22120457 - Khưu Hải Châu\\23122006 - Lưu Thượng Hồng\\23122020 - Nguyễn Thiên Ấn\\23122034 - Lê Nguyên Khang\\23122036 - Nguyễn Ngọc Khoa}
+\newcommand{\teachername}{GS.TS. Lê Hoài Bắc\\ThS. Lê Nhựt Nam}
+
+% Header
+\lhead{\reporttitle}
+\rhead{
+Trường Đại học Khoa học Tự nhiên - ĐHQG HCM\\
+\coursename
 }
 
+% % Footer
+% \newcommand{\leftfooter}{\LaTeX\ by \href{https://github.com/trhgquan}{Quan, Tran Hoang}}
+% \lfoot{\leftfooter}
+% test
+
+% ============ DOCUMENT ============
 \begin{document}
 
-\maketitle
+\pagenumbering{roman}
+\input{content/title.tex}
 
-\begin{abstract}
-This report details the implementation and empirical evaluation of a multi-modality data preprocessing pipeline encompassing tabular classification, temporal forecasting, and image-based exploratory analysis. To demonstrate the necessity of robust preprocessing, we apply our methodology to a large-scale mental health survey dataset (140,700 records) and a high-resolution energy grid dataset. Our framework evaluates missing-value imputation, outlier attenuation, scaling, and categorical encoding systematically through metric-driven comparisons. For tabular features, D'Agostino-Pearson tests indicate ubiquitous non-normality, guiding the implementation of robust scaling techniques. Among imputation procedures, central-tendency methods exhibited superior average root mean squared error (RMSE). In the temporal track, advanced feature engineering, including lagging autoregressive components and Seasonal-Trend decomposition using Loess (STL), coupled with Random Forest regression, achieved strong predictive performance with an out-of-sample Mean Absolute Error (MAE) of 304.15~MW, approximately 1\% of the mean aggregate load. Furthermore, Granger Causality tests successfully isolated leading indicators for load demand and grid response. This unified approach advocates for explicit quantitative diagnostics, ensuring reproducibility and stability of predictive capabilities in heterogeneous datasets.
-\end{abstract}
+\tableofcontents
+\pagebreak
+% \listoftables
+% \pagebreak
+% \listoffigures
+% \pagebreak
 
-\begin{IEEEkeywords}
-Data preprocessing, exploratory data analysis, time-series forecasting, imputation, Random Forest, Granger causality, class imbalance.
-\end{IEEEkeywords}
+\pagenumbering{arabic}
+\setcounter{page}{1}
 
-\section{Introduction}
-The generalization capability of any machine learning model is fundamentally dependent on the quality of its underlying data. Data collected in real-world scenarios inevitably exhibit anomalies, missing entries, structurally induced biases, and distributional non-normality. Without rigorous preprocessing protocols, the internal validity of trained models severely degrades, leading to over-optimistic validation metrics and unstable real-world deployment.
 
-The objective of this study is to instantiate a holistic, reproducible preprocessing methodology across diverse data modalities. We structure our approach into distinct analytical tracks: a tabular regime centered on classification within a mental health context, a temporal regime prioritizing energy demand forecasting, and preliminary exploratory procedures for image datasets. 
 
-For the tabular track, preprocessing decisions are validated through direct statistical diagnostics, demonstrating trade-offs between class-balanced performance and precision metrics. The temporal track expands our scope to handle serially correlated structures; it leverages Seasonal-Trend decomposition using Loess (STL) and Granger Causality evaluations to build robust lag features. Empirical effectiveness is solidified through Random Forest regression. Conclusively, this work outlines an exhaustive, transparent protocol for data transformation.
+% References
+\input{ref/ref.tex}
 
-\section{Background and Related Methods}
-The proposed pipeline integrates conventional statistical tests with contemporary data science paradigms. Omnibus testing frameworks such as D'Agostino-Pearson~\cite{dagostino1990} establish distributional characteristics, while Pearson and Spearman correlation coefficients capture parametric and monotonic relationships, respectively \cite{pearson1895,spearman1904}. 
-
-Within the temporal domain, stationarity checks are governed by the Augmented Dickey-Fuller (ADF) methodology. Causality and feature interdependence over periods of lag utilize the Granger Causality formulation \cite{granger1969investigating}, measuring the predictive gain obtained from secondary variables. Modeling heavily relies on ensemble learners like Random Forests~\cite{breiman2001rf}, exploiting decision trees' non-linear capabilities. The overall data transformation cycle utilizes libraries such as \texttt{scikit-learn} \cite{scikit-learn} and \texttt{statsmodels}.
-
-\section{Repository Overview}
-The repository structure enforces experimental reproducibility:
-\begin{itemize}
-\item \texttt{data/raw/}: Contains original records for both mental health and temporal energy demands.
-\item \texttt{data/processed/}: Stores extracted artifacts such as normality tests, comparative imputation RMSEs, Variance Inflation Factors (VIF), and causal inference parameters.
-\item \texttt{notebooks/}: Categorized executable Jupyter notebooks covering Tabular EDA and Preprocessing, Temporal EDA and Feature Engineering, and preliminary Image analysis.
-\item \texttt{report/}: \LaTeX-based source files for documentation.
-\end{itemize}
-
-The Python ecosystem relies on rigorously pinned versions via \texttt{requirements.txt}, utilizing core numeric libraries alongside \texttt{imbalanced-learn} for balancing techniques.
-
-\section{Datasets}
-\subsection{Tabular: Mental Health Parameters}
-The tabular study investigates a broad mental health dataset dedicated to predicting depression. Exceeding 140,700 records, the dataset captures 19 heterogeneous variables incorporating demographic indices, academic or occupational pressures, and lifestyle metrics. The binary target, \texttt{Depression}, exhibits distinct class imbalance (approximately 18\% positive incidence). The dataset further illustrates Missing At Random (MAR) topologies, where disjoint attribute blocks apply depending on user classification (i.e., students lack professional metrics, while workers lack academic metrics), representing realistic tabular structures needing tailored imputation.
-
-\subsection{Temporal: Power Grid Generation and Load}
-The temporal data chronicles power grid dynamics, consisting of a target variable (\texttt{load}) against exogenous variables (\texttt{generation solar}, \texttt{generation wind onshore}, \texttt{generation fossil gas}, \texttt{price actual}). The data encapsulates several operational constraints, demonstrating strong cyclical behaviors aligned with diurnal schedules and periodic anomalies associated with macroeconomic shocks and extreme weather conditions. The primary challenge involves eliminating non-stationary components to ensure a homogeneous input for autoregressive model training.
-
-\subsection{Image Modality}
-Initial exploratory analysis is also dedicated to image datasets. While full predictive modeling extends beyond the scope of the current processing metrics, the methodology establishes a standard EDA pipeline designed to detect basic dimensional anomalies, brightness gradients, and structural inconsistencies in visual arrays.
-
-\section{Methodology}
-\subsection{Problem Formulation}
-The challenge encompasses refining two distinct inputs:
-1) A static feature space $X_{tab} \in \mathbb{R}^{n \times p}$ linked to a categorical vector $y_{tab}$, necessitating encoding, standardization, and balance restoration.
-2) A chronologically ordered sequence $\{X_t, y_t\}_{t=1}^{T}$, where temporal embeddings and causal dependencies are essential prior to autoregressive prediction.
-
-\subsection{Tabular Diagnostics and Evaluation}
-Tabular attributes are analyzed using Pearson and Spearman metrics to decouple strictly linear dependencies from generic monotonic patterns. Subsequent algorithmic transformations undergo distinct comparative testing:
-\begin{itemize}
-\item \textbf{Imputation:} Mean, median, mode, and kNN/MICE are contrasted continuously using Root Mean Squared Error (RMSE).
-\item \textbf{Outliers:} The Kolmogorov-Smirnov (KS) test tracks distributional shifts following Isolation Forest implementation \cite{liu2008isolation}.
-\item \textbf{Multi-collinearity:} Computed through the Variance Inflation Factor (VIF). Values above acceptable thresholds signal detrimental dimensionality.
-\item \textbf{Resampling strategy:} Over/under-sampling strategies (SMOTE \cite{chawla2002smote}, RUS) are optimized to maximize the standard macro-F1 statistic.
-\end{itemize}
-
-\subsection{Temporal Diagnostics and Feature Engineering}
-To enforce functional forecasting behavior, the time-series undergoes comprehensive stationarity transformation:
-\begin{itemize}
-\item \textbf{Interpolation and Smoothing:} Gaps are imputed via linear interpolation, and localized outliers are mapped and subdued through rolling-window moving averages.
-\item \textbf{Stationarity Tests:} The Augmented Dickey-Fuller (ADF) \cite{dickey1979distribution} and the Kwiatkowski-Phillips-Schmidt-Shin (KPSS) \cite{kpss1992testing} tests define non-stationarity levels, dictating appropriate degrees of sequential differencing.
-\item \textbf{Decomposition:} Seasonal-Trend Decomposition using Loess (STL) \cite{cleveland1990stl} separates systematic components (trend, diurnal cycles) from stochastic residuals.
-\item \textbf{Autoregressive Assembly:} To capture functional memory, past lag features $\ell_{1, 2, 3, 24}$ are explicitly extracted and appended as predictors. Cyclic sine/cosine encoding resolves angular discontinuities in chronological timestamps.
-\end{itemize}
-
-\subsection{Evaluation Metrics}
-Continuous metric performance in the temporal tracks employs:
-\begin{equation}
-\mathrm{MAE} = \frac{1}{n} \sum_{t=1}^{n} |y_t - \hat{y}_t|
-\end{equation}
-\begin{equation}
-\mathrm{RMSE} = \sqrt{\frac{1}{n} \sum_{t=1}^{n} (y_t - \hat{y}_t)^2}
-\end{equation}
-
-For Granger Causality, independent hypotheses analyze if knowing the history of vector $X$ significantly alters the variance in target $Y$, operationalized via F-statistics on stationary representations.
-
-\section{Experimental Results}
-\subsection{Tabular Preprocessing Efficacy}
-Distributions evaluated fundamentally rejected normality hypothesis assumptions under the D'Agostino-Pearson tests ($p \approx 0$). Correlation networks strongly nominated \texttt{Age} as the primary negative associate of depression ($r = -0.5647$) and \texttt{Academic Pressure} as a leading concurrent positive associate ($r = 0.4750$). 
-
-\begin{table*}[!t]
-\centering
-\caption{Empirical Summary of Tabular Preprocessing Framework}
-\label{tab:tabular_preprocess}
-\begin{tabular}{>{\raggedright\arraybackslash}p{3cm} >{\raggedright\arraybackslash}p{6cm} >{\raggedright\arraybackslash}p{6cm}}
-\toprule
-Phase & Quantitative Result & Applied Protocol Justification \\
-\midrule
-Imputation Quality & Mean calculation established optimum reconstruction averages (RMSE $\approx$ 5.78), surpassing Mode configurations (RMSE $\approx$ 9.03). & Under dataset-specific missing patterns (MAR), simple central-tendencies performed robustly against overly parameterized techniques. \\
-Distribution Scaling & Parametric algorithms struggled due to zero normality verification. & Robust Scaling is preferred, neutralizing isolated extremes inherently better than deterministic Gaussian standardization. \\
-Categorical Encoding & Binary mapping minimized systemic overlap (Mean VIF = 4.2138). Frequency mechanisms proved disastrous (Mean VIF $>$ 800). & Careful dimensionality restriction prevents algorithmic confusion and prevents rank deficiency issues in underlying matrices. \\
-Data Balance Strategy & SMOTE enhanced macro-F1 to 0.8832 over uniform baselines. & Minority class boundary extrapolation via SMOTE proved mandatory to resolve raw class skewness effectively. \\
-\bottomrule
-\end{tabular}
-\end{table*}
-
-Table~\ref{tab:tabular_preprocess} demonstrates that basic mean imputation and isolation forests are effective, provided they are contextualized correctly. Feature selection saturation was observed at approximately 15 to 20 retained principal dimensions, rendering subsequent elements obsolete.
-
-\subsection{Temporal Forecasting Performance}
-Training the transformed energy sequences with a Random Forest Regressor yielded outstanding operational results. Using a chronological training/testing split mapping real operational use-cases, the architecture obtained:
-\begin{itemize}
-\item \textbf{Mean Absolute Error (MAE): 304.15~MW}
-\item \textbf{Root Mean Squared Error (RMSE): 505.03~MW}
-\end{itemize}
-
-Given an aggregate load threshold spanning 28,700~MW, the predictive deviation represents an approximately 1\% average error margin, validating the applied stationary transformation and feature engineering structure. The discrepancy between RMSE and MAE reflects the model's occasional under-prediction of extreme systemic anomalies (e.g., radical climatic fluctuations) independent of sequential autoregression.
-
-\subsection{Temporal Feature Influence and Causality}
-Interpretability extraction via Random Forest feature importance maps highlighted that immediate prior load measurements (`lag 1') dominated the predictive output weight ($\approx 89.51\%$), supported subsequently by sine-cosine localized features (e.g., \texttt{hour\_cos} at $3.07\%$). 
-
-Granger Causality testing across differenced stationary series further clarified market structures:
-\begin{itemize}
-\item \textbf{Demand Dynamics:} Load exerts profound market pressure, significantly driving subsequent solar allocations (F = 947.4) and overall energy pricing (F = 872.0). 
-\item \textbf{External Invariance:} Alternately, wind onshore generation maintained distinct independence; it is stochastically driven and entirely oblivious to immediate systemic load or pricing fluctuations, yielding exceptionally low statistical association metrics across evaluated permutations.
-\end{itemize}
-
-\section{Proposed Best Practices}
-The accumulated empirical evidence dictates a standardized approach across equivalent repositories:
-1. Always test parametric assumptions explicitly; robust scaling mechanisms frequently outperform strictly standardized approaches on authentic data.
-2. Monitor VIF diligently when assigning classification encodings. Target encodings and pure frequency translations risk debilitating multicollinearity.
-3. For temporal networks, never substitute autoregressive engineering with simple imputation. Utilize rigorous decomposition (e.g., STL) and differencing to isolate variance and neutralize localized seasonality prior to any learning mechanism.
-
-\section{Limitations and Future Work}
-While quantitative conclusions are firm, the study relies on localized benchmarks. Advanced temporal forecasting mechanisms utilizing Long Short-Term Memory (LSTM) systems or generalized transformer-based forecasters should be mapped against the baseline Random Forest ensemble. Furthermore, establishing comprehensive quantitative boundaries for the Image Track will unify the final aspect of the multi-modal preprocessing methodology.
-
-\section{Conclusion}
-This report solidifies a robust, measurable data preprocessing architecture effectively addressing tabular, temporal, and initial image formats. Over-reliance on generic frameworks was empirically challenged by enforcing dataset-specific evaluation—ranging from VIF matrices restricting binary encoders to Granger causality dictating feature dependencies. The culmination of this methodological integrity is highlighted by the temporal tracking subsystem, effectively forecasting gross regional constraints within a 1\% absolute error window. Expanding these strictly accountable protocols represents foundational data stewardship prior to scaling arbitrary model complexity.
-
-\begin{thebibliography}{99}
-
-\bibitem{dagostino1990}
-R. B. D'Agostino, A. Belanger, and R. B. D'Agostino Jr.,
-``A suggestion for using powerful and informative tests of normality,''
-\emph{The American Statistician}, vol. 44, no. 4, pp. 316--321, 1990.
-
-\bibitem{pearson1895}
-K. Pearson,
-``Notes on regression and inheritance in the case of two parents,''
-\emph{Proceedings of the Royal Society of London}, vol. 58, pp. 240--242, 1895.
-
-\bibitem{spearman1904}
-C. Spearman,
-``The proof and measurement of association between two things,''
-\emph{The American Journal of Psychology}, vol. 15, no. 1, pp. 72--101, 1904.
-
-\bibitem{breiman2001rf}
-L. Breiman,
-``Random forests,''
-\emph{Machine Learning}, vol. 45, no. 1, pp. 5--32, 2001.
-
-\bibitem{scikit-learn}
-F. Pedregosa \emph{et al.},
-``Scikit-learn: Machine learning in Python,''
-\emph{Journal of Machine Learning Research}, vol. 12, pp. 2825--2830, 2011.
-
-\bibitem{liu2008isolation}
-F. T. Liu, K. M. Ting, and Z. Zhou,
-``Isolation Forest,''
-\emph{2008 Eighth IEEE International Conference on Data Mining}, Pisa, Italy, pp. 413--422, 2008.
-
-\bibitem{chawla2002smote}
-N. V. Chawla, K. W. Bowyer, L. O. Hall, and W. P. Kegelmeyer,
-``SMOTE: Synthetic minority over-sampling technique,''
-\emph{Journal of Artificial Intelligence Research}, vol. 16, pp. 321--357, 2002.
-
-\bibitem{dickey1979distribution}
-D. A. Dickey and W. A. Fuller,
-``Distribution of the Estimators for Autoregressive Time Series with a Unit Root,''
-\emph{Journal of the American Statistical Association}, vol. 74, no. 366a, pp. 427--431, 1979.
-
-\bibitem{kpss1992testing}
-D. Kwiatkowski, P. C. B. Phillips, P. Schmidt, and Y. Shin,
-``Testing the null hypothesis of stationarity against the alternative of a unit root,''
-\emph{Journal of Econometrics}, vol. 54, no. 1-3, pp. 159--178, 1992.
-
-\bibitem{cleveland1990stl}
-R. B. Cleveland, W. S. Cleveland, J. E. McRae, and I. Terpenning,
-``STL: A seasonal-trend decomposition procedure based on loess,''
-\emph{Journal of Official Statistics}, vol. 6, no. 1, pp. 3--73, 1990.
-
-\bibitem{granger1969investigating}
-C. W. J. Granger,
-``Investigating Causal Relations by Econometric Models and Cross-Spectral Methods,''
-\emph{Econometrica}, vol. 37, no. 3, pp. 424--438, 1969.
-
-\end{thebibliography}
-
+% Appendix
+% \appendix
+% Add \cleardoublepage to move appendices to next page.
+% \input{appendix/appendix.tex}
 \end{document}
