@@ -1,7 +1,7 @@
 \section{Tiền xử lý dữ liệu dạng bảng}
 
 \subsection{Dữ liệu sử dụng}
-Nhóm sử dụng \textit{Mental Health Survey Dataset} cho phần dữ liệu bảng. Tập dữ liệu được lưu tại \texttt{data/raw/mental\_health\_train.csv} và \texttt{data/raw/mental\_health\_test.csv}. Tập huấn luyện có 140{,}700 bản ghi, gồm các nhóm thuộc tính nhân khẩu học, học tập/công việc và thói quen sinh hoạt, với nhãn mục tiêu \textit{Depression}. Bộ dữ liệu này thỏa đầy đủ tiêu chí đề bài: quy mô lớn, có đồng thời thuộc tính số và phân loại, và có tỉ lệ thiếu cao ở một số biến.
+Nhóm sử dụng \textit{Mental Health Survey Dataset} cho phần dữ liệu bảng. Tập huấn luyện có $140.700$ bản ghi, gồm các nhóm thuộc tính nhân khẩu học, học tập/công việc và thói quen sinh hoạt, với nhãn mục tiêu \textit{Depression}. Bộ dữ liệu này thỏa đầy đủ tiêu chí đề bài: quy mô lớn, có đồng thời thuộc tính số và phân loại, và có tỉ lệ thiếu cao ở một số biến.
 
 \begin{table}[H]
     \centering
@@ -21,33 +21,167 @@ Nhóm sử dụng \textit{Mental Health Survey Dataset} cho phần dữ liệu b
     \caption{Kiểm tra tiêu chí lựa chọn dữ liệu bảng}
 \end{table}
 
-\subsection{Phân tích thống kê khám phá (EDA chuyên sâu)}
-\textbf{Kiểm tra phân phối.} Nhóm áp dụng kiểm định D'Agostino-Pearson cho toàn bộ 8 thuộc tính số (do $n > 5000$). Kết quả cho thấy tất cả biến đều có $p$-value xấp xỉ 0, tức là không tuân theo phân phối chuẩn. Đồng thời, kurtosis trung bình quanh $-1.2$ cho thấy dữ liệu có xu hướng gần đều.
+\subsection{Phân tích khám phá dữ liệu dạng bảng}
+Phần EDA thống kê của dữ liệu bảng trả lời 3 câu hỏi chính:
+\begin{itemize}
+    \item Dữ liệu có theo phân phối chuẩn để dùng các giả định thống kê cổ điển hay không?
+    \item Tín hiệu dự báo chính cho nhãn \textit{Depression} nằm ở nhóm biến nào?
+    \item Giá trị thiếu xuất hiện ngẫu nhiên hay phụ thuộc theo nhóm đối tượng?
+\end{itemize}
 
-\textbf{Tương quan đa biến.} Ma trận tương quan Pearson và Spearman chỉ ra biến \textit{Age} có liên hệ mạnh nhất với nhãn \textit{Depression} với $r=-0.565$ (Pearson) và $\rho=-0.541$ (Spearman). Kết quả này được dùng làm căn cứ ban đầu cho bước chọn đặc trưng ở phần sau.
+\textbf{Kiểm tra phân phối.} Nhóm áp dụng kiểm định D'Agostino-Pearson cho toàn bộ 8 thuộc tính số (do $n > 5000$) (\cite{dagostino1973tests,scipy_normaltest}). Kết quả cho thấy tất cả biến đều có $p$-value rất nhỏ (xấp xỉ 0), tức là không tuân theo phân phối chuẩn. Đồng thời, kurtosis trung bình quanh $-1.2$ cho thấy nhiều biến có xu hướng gần phân phối đều.
 
-\textbf{Phân tích giá trị thiếu.} Cấu trúc thiếu dữ liệu thể hiện rõ cơ chế MAR theo nhóm đối tượng: nhóm sinh viên thiếu chủ yếu ở \textit{Work Pressure} và \textit{Job Satisfaction}, trong khi nhóm người đi làm thiếu ở \textit{Academic Pressure}, \textit{CGPA}, và \textit{Study Satisfaction}. Vì vậy, chiến lược điền khuyết được thiết kế theo ngữ cảnh từng nhóm thay vì dùng một quy tắc đồng nhất cho toàn bộ tập.
+\textbf{Tương quan đa biến.} Ma trận tương quan Pearson và Spearman cho thấy biến \textit{Age} có liên hệ mạnh nhất với nhãn \textit{Depression}: $r=-0.565$ (Pearson) và $\rho=-0.541$ (Spearman). Kết quả này được dùng làm căn cứ ban đầu cho bước chọn đặc trưng. Xem Hình \ref{fig:tabular_corr_heatmap}.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{img/correlation_heatmaps.png}
+    \caption{Heatmap tương quan Pearson và Spearman cho các biến số và nhãn \textit{Depression}.}
+    \label{fig:tabular_corr_heatmap}
+\end{figure}
+
+
+\textbf{Phân tích giá trị thiếu.} Cấu trúc thiếu dữ liệu thể hiện rõ cơ chế MAR theo nhóm đối tượng (\cite{rubin1976inference}). Nhóm sinh viên thiếu chủ yếu ở \textit{Work Pressure} và \textit{Job Satisfaction}, trong khi nhóm người đi làm thiếu ở \textit{Academic Pressure}, \textit{CGPA}, và \textit{Study Satisfaction}. Vì vậy, chiến lược điền khuyết được thiết kế theo ngữ cảnh từng nhóm thay vì dùng một quy tắc chung. Xem Hình \ref{fig:tabular_missing_analysis}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{img/missing_data_analysis.png}
+    \caption{Phân tích tỉ lệ thiếu và cơ chế thiếu theo nhóm đối tượng trong dữ liệu bảng.}
+    \label{fig:tabular_missing_analysis}
+\end{figure}
+
 
 \subsection{Các kỹ thuật tiền xử lý và đánh giá định lượng}
 
-\subsubsection*{Xử lý giá trị thiếu có kiểm soát}
-Nhóm so sánh 7 chiến lược điền khuyết trên kịch bản tạo thêm 10\% thiếu MCAR và đánh giá bằng RMSE. Kết quả trung bình cho thấy \textbf{Mean} đạt RMSE tốt nhất ($5.78$), trong khi \textbf{Mode} kém nhất ($9.03$, cao hơn khoảng 66\%). Với bài toán đơn biến, kNN và MICE cho kết quả gần tương đương Mean.
+\subsubsection{Xử lý giá trị thiếu có kiểm soát}
+Nhóm so sánh 5 chiến lược điền khuyết (Mean, Median, Mode, kNN, MICE) trên kịch bản tạo thêm 10\% thiếu MCAR và đánh giá bằng RMSE (\cite{troyanskaya2001missing,buuren2011mice}). Trong đó, kNN được thử với $k=3,5,10$. Kết quả trung bình cho thấy \textbf{Mean} đạt RMSE tốt nhất ($5.78$), trong khi \textbf{Mode} kém nhất ($9.03$, cao hơn khoảng 66\%). Với bài toán đơn biến trong notebook, kNN và MICE cho kết quả gần tương đương Mean.
 
-\subsubsection*{Phát hiện và xử lý ngoại lai}
-Các phương pháp IQR, Z-score, Isolation Forest, LOF và DBSCAN đều được triển khai và so sánh. Nhóm chọn \textbf{Isolation Forest} với contamination $=0.05$ làm cấu hình chính vì ổn định trên dữ liệu không chuẩn. Kiểm định KS trước/sau khi loại ngoại lai cho 8 biến đều có $p < 0.05$, cho thấy việc loại ngoại lai làm thay đổi phân phối một cách có ý nghĩa thống kê.
+Sau bước benchmark, pipeline điền khuyết thực tế được chốt theo ngữ cảnh dữ liệu:
+\begin{itemize}
+    \item Median theo nhóm \textit{Student} cho các cột chỉ có nghĩa với sinh viên.
+    \item Median theo nhóm \textit{Working Professional} cho các cột chỉ có nghĩa với người đi làm.
+    \item Điền 0 cho các role-column còn lại (thiếu do không thuộc vai trò đó).
+    \item Mode cho các biến phân loại như \textit{Dietary Habits}, \textit{Degree}; riêng \textit{Profession} điền \textit{Student} cho sinh viên.
+\end{itemize}
 
-\subsubsection*{Chuẩn hóa dữ liệu có kiểm định}
-Nhóm thử Min-Max, Z-score, Robust Scaling và Quantile Transform. Kết quả Levene kết hợp quan sát violin plot cho thấy \textbf{Robust Scaling} là lựa chọn cân bằng nhất: giảm ảnh hưởng ngoại lai nhưng vẫn giữ cấu trúc phân phối tốt hơn Quantile Transform.
+Kết quả so sánh RMSE giữa các chiến lược thể hiện tại Hình \ref{fig:tabular_imputation_compare}.
 
-\subsubsection*{Mã hóa biến phân loại nâng cao}
-Ngoài One-Hot và Ordinal, nhóm triển khai thêm Target Encoding (K-fold), Binary Encoding và Frequency Encoding. Đánh giá bằng VIF cho thấy \textbf{Binary Encoding} tốt nhất (mean VIF $=4.21$), trong khi \textbf{Frequency Encoding} gây đa cộng tuyến rất cao (mean VIF $=889.59$).
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{img/imputation_comparison.png}
+    \caption{So sánh RMSE của các chiến lược điền khuyết trên kịch bản thiếu MCAR 10\%.}
+    \label{fig:tabular_imputation_compare}
+\end{figure}
 
-\subsubsection*{Lựa chọn và giảm chiều đặc trưng}
-Nhóm đánh giá MI, RF importance, RFE và PCA bằng F1-score cross-validation 5-fold. Ở mức $k=10$, RF đạt F1 $=0.809$ (cao hơn MI với F1 $=0.784$). Khi $k \geq 15$, hiệu năng bão hòa quanh F1 $\approx 0.813$, cho thấy số đặc trưng hữu ích thực tế không cần quá lớn.
+\subsubsection{Phát hiện và xử lý ngoại lai}
+Nhóm triển khai đồng thời 5 hướng phát hiện ngoại lai: IQR, Z-score, Isolation Forest, LOF và DBSCAN (\cite{liu2008isolation,breunig2000lof,ester1996dbscan}). Thiết kế đánh giá gồm 3 lớp để tránh kết luận phiến diện:
+\begin{itemize}
+    \item \textbf{Lớp 1 -- Tỉ lệ bị gắn cờ ngoại lai}: kiểm tra mức độ bảo thủ/nhạy của từng phương pháp.
+    \item \textbf{Lớp 2 -- KS trước/sau loại ngoại lai}: đo mức méo phân phối khi lọc dữ liệu.
+    \item \textbf{Lớp 3 -- Jaccard similarity}: đo mức đồng thuận giữa các tập điểm bị gắn cờ.
+\end{itemize}
 
-\subsubsection*{Xử lý mất cân bằng lớp}
-Trên tập test giữ nguyên phân phối gốc, \textbf{SMOTE} đạt F1-macro cao nhất ($0.883$), nhỉnh hơn baseline ($0.882$) và ADASYN ($0.874$). Baseline vẫn có AUC-ROC cao ($0.969$), nhưng SMOTE cho cân bằng Precision--Recall tốt hơn cho bài toán phát hiện lớp thiểu số.
+Kết quả lớp 1 cho thấy sự khác biệt rõ rệt về hành vi:
+\begin{itemize}
+    \item IQR: 19.83\%, Z-score: 7.01\%.
+    \item IsoForest: 1.00\% (contamination 0.01), 5.00\% (0.05), 10.00\% (0.10).
+    \item LOF-20 và DBSCAN: xấp xỉ 0\% trong cấu hình thử nghiệm.
+\end{itemize}
 
+Ở lớp 2 (KS test), cấu hình \texttt{IsoForest\_0.05} cho KS statistic thấp nhất trên 7/8 biến chính (ví dụ \textit{Age}: 0.0346 so với IQR: 0.1640 và Z-score: 0.0499), cho thấy loại bỏ được điểm bất thường mà vẫn giữ hình dạng phân phối tốt hơn hai phương pháp ngưỡng cổ điển.
+
+Ở lớp 3 (Jaccard), mức đồng thuận IQR--Z-score chỉ 0.353 và IQR--IsoForest chỉ 0.247; Z-score--IsoForest là 0.381. Điều này xác nhận mỗi phương pháp đang bắt các kiểu điểm khác nhau, và IQR có xu hướng đánh dấu quá rộng trên dữ liệu có kurtosis âm (gần đều).
+
+Tổng hợp ba lớp đánh giá, nhóm chọn \textbf{Isolation Forest với contamination $=0.05$} làm cấu hình chính vì thỏa ba tiêu chí thực hành: tỉ lệ loại bỏ hợp lý (5\%), méo phân phối thấp, và ổn định trên dữ liệu đa chiều không chuẩn.
+
+So sánh tỉ lệ phát hiện ngoại lai và mức đồng thuận giữa phương pháp được thể hiện tại Hình \ref{fig:tabular_outlier_rates} và Hình \ref{fig:tabular_outlier_jaccard}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/outlier_rates.png}
+    \caption{Tỉ lệ ngoại lai theo từng phương pháp phát hiện trên dữ liệu bảng.}
+    \label{fig:tabular_outlier_rates}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{img/outlier_jaccard.png}
+    \caption{Ma trận Jaccard similarity giữa các phương pháp phát hiện ngoại lai.}
+    \label{fig:tabular_outlier_jaccard}
+\end{figure}
+
+\subsubsection{Chuẩn hóa dữ liệu có kiểm định}
+Nhóm thử Min-Max, Z-score, Robust Scaling và Quantile Transform (\cite{huber1981robust,sklearn_robustscaler}). Kết quả Levene kết hợp quan sát violin plot cho thấy \textbf{Robust Scaling} là lựa chọn cân bằng nhất: giảm ảnh hưởng ngoại lai nhưng vẫn giữ cấu trúc phân phối tốt hơn Quantile Transform.
+
+Levene's test chủ yếu phản ánh thay đổi phương sai, nên quyết định cuối cùng được dựa thêm trên hình dạng phân phối từ violin plot (Hình \ref{fig:tabular_normalization_violin}).
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{img/normalization_violin.png}
+    \caption{So sánh phân phối trước/sau chuẩn hóa bằng violin plot trên các biến số chính.}
+    \label{fig:tabular_normalization_violin}
+\end{figure}
+
+\subsubsection{Mã hóa biến phân loại nâng cao}
+Ngoài One-Hot và Ordinal, nhóm triển khai thêm Target Encoding (K-fold), Binary Encoding và Frequency Encoding (\cite{category_encoders_binary}). Đánh giá bằng VIF (\cite{james2013islr,statsmodels_vif}) cho thấy \textbf{Binary Encoding} tốt nhất (mean VIF $=4.21$), trong khi \textbf{Frequency Encoding} gây đa cộng tuyến rất cao (mean VIF $=889.59$).
+
+Vì vậy, ở bước tạo dataset cuối, nhóm chọn Binary Encoding cho toàn bộ biến phân loại để tối ưu đa cộng tuyến và giữ số chiều ở mức hợp lý.
+
+\subsubsection{Lựa chọn và giảm chiều đặc trưng}
+Nhóm tổ chức bài toán chọn đặc trưng theo hai tầng: \textbf{chọn lọc} (MI, RF importance, RFE) và \textbf{giảm chiều} (PCA), đánh giá bằng F1-score cross-validation 5-fold với cùng bộ phân lớp Logistic Regression để đảm bảo công bằng (\cite{guyon2002gene,jolliffe2002pca,breiman2001random}).
+
+Kết quả định lượng theo số chiều $k$:
+\begin{itemize}
+    \item $k=5$: RF 0.746, MI 0.713, PCA 0.724; RFE ổn định quanh 0.813.
+    \item $k=10$: RF 0.809 (cao hơn MI 0.784 và PCA 0.747).
+    \item $k\geq 15$: MI, RF, RFE đều hội tụ quanh 0.813; PCA đạt 0.816 tại $k=20$.
+\end{itemize}
+
+Diễn giải chuyên sâu từ kết quả này:
+\begin{itemize}
+    \item RF importance cho hiệu quả tốt khi cần tập biến nhỏ (vùng $k\leq10$).
+    \item MI là filter đơn biến nên tăng chậm hơn khi dữ liệu có tương tác phi tuyến giữa thuộc tính.
+    \item PCA có thể đạt điểm cao ở $k$ lớn, nhưng giảm khả năng diễn giải trực tiếp theo thuộc tính gốc.
+    \item RFE cho hiệu năng cao và ổn định trên toàn dải $k$, phù hợp mục tiêu cân bằng giữa độ chính xác và khả năng giải thích.
+\end{itemize}
+
+Vì mục tiêu của pipeline tabular là vừa dự báo tốt vừa giữ tính diễn giải, nhóm chọn \textbf{RFE} làm cấu hình mặc định cho bước chọn đặc trưng; đồng thời dùng RF importance như baseline đối chiếu khi cần rút gọn nhanh theo ngưỡng $k$. Đường cong F1 theo số chiều được trình bày trong Hình \ref{fig:tabular_feature_selection_f1}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/feature_selection_f1.png}
+    \caption{So sánh F1-score theo số lượng đặc trưng cho MI, RF, PCA và RFE.}
+    \label{fig:tabular_feature_selection_f1}
+\end{figure}
+
+\subsubsection{Xử lý mất cân bằng lớp}
+Đây là bước nâng cao vì cần tối ưu đồng thời khả năng phát hiện lớp thiểu số và độ tin cậy tổng thể của mô hình. Nhóm đánh giá 4 cấu hình: Baseline (không resampling), SMOTE, ADASYN và Random Under-sampling (\cite{chawla2002smote,he2008adasyn}). Thiết kế thí nghiệm được cố định như sau:
+\begin{itemize}
+    \item Chia train/test theo \textit{stratified split}; tập test giữ nguyên phân phối gốc để phản ánh tình huống triển khai thực tế.
+    \item Chỉ resampling trên tập train để tránh data leakage.
+    \item Dùng cùng một mô hình đánh giá (Random Forest, \texttt{n\_estimators=50}, \texttt{max\_depth=8}) cho mọi chiến lược để đảm bảo so sánh công bằng.
+\end{itemize}
+
+Kết quả định lượng trên tập test gốc:
+\begin{itemize}
+    \item Baseline: Precision $=0.897$, Recall $=0.869$, F1-macro $=0.882$, AUC-ROC $=0.969$.
+    \item SMOTE: Precision $=0.866$, Recall $=0.904$, F1-macro $=0.883$, AUC-ROC $=0.969$.
+    \item ADASYN: Precision $=0.853$, Recall $=0.901$, F1-macro $=0.874$, AUC-ROC $=0.964$.
+    \item Random Under-sampling: Precision $=0.836$, Recall $=0.913$, F1-macro $=0.866$, AUC-ROC $=0.969$.
+\end{itemize}
+
+Diễn giải theo góc nhìn nâng cao cho thấy Under-sampling đẩy Recall cao nhất nhưng làm giảm Precision rõ rệt do mất nhiều mẫu lớp đa số; ADASYN cải thiện Recall nhưng kém ổn định hơn ở AUC. Baseline có Precision tốt nhưng bỏ sót nhiều ca dương tính hơn. \textbf{SMOTE} là cấu hình cân bằng nhất: tăng Recall đáng kể so với baseline ($+3.5\%$ tương đối), giữ AUC-ROC không giảm, và đạt F1-macro cao nhất (0.883). Với bài toán sàng lọc nguy cơ trầm cảm, cấu hình ưu tiên Recall nhưng vẫn kiểm soát false positive ở mức hợp lý là phù hợp nhất.
+
+Kết quả so sánh Precision, Recall, F1-macro và AUC-ROC giữa các chiến lược được trình bày trong Hình \ref{fig:tabular_imbalance_compare}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.92\textwidth]{img/imbalance_comparison.png}
+    \caption{So sánh các chiến lược xử lý mất cân bằng lớp trên tập test gốc.}
+    \label{fig:tabular_imbalance_compare}
+\end{figure}
+
+\subsection{Đánh giá pipeline}
+Bảng \ref{tab:tabular_pipeline_summary} tổng hợp các kết quả định lượng cho từng bước trong pipeline tiền xử lý bảng
 \begin{table}[H]
     \centering
     \begin{tabular}{|l|l|l|l|}
@@ -62,13 +196,50 @@ Trên tập test giữ nguyên phân phối gốc, \textbf{SMOTE} đạt F1-macr
         \hline
         Mã hóa            & Binary Encoding               & Frequency Encoding    & VIF: 4.21 vs 889.59      \\
         \hline
-        Chọn đặc trưng    & RF importance ($k=10$)        & MI ($k=5$)            & F1: 0.809 vs 0.713       \\
+        Chọn đặc trưng    & RFE                           & MI ($k=5$)            & F1 xấp xỉ 0.813          \\
         \hline
         Cân bằng lớp      & SMOTE                         & Random Under-sampling & F1-macro: 0.883 vs 0.866 \\
         \hline
     \end{tabular}
     \caption{Tổng hợp kết quả định lượng cho phần dữ liệu bảng}
+    \label{tab:tabular_pipeline_summary}
 \end{table}
 
-\subsection{Kết luận cho pipeline dữ liệu bảng}
-Từ các kết quả trên, pipeline đề xuất cho dữ liệu bảng gồm: điền khuyết theo ngữ cảnh dữ liệu, phát hiện ngoại lai bằng Isolation Forest (0.05), chuẩn hóa bằng Robust Scaling, mã hóa ưu tiên Binary cho biến nhiều mức, chọn đặc trưng theo RF importance/RFE, và cân bằng lớp bằng SMOTE khi huấn luyện.
+Sau khi hoàn thành tiền xử lý, nhóm triển khai hai bước đánh giá: (1) tổng hợp phương pháp tốt nhất cho từng công đoạn tiền xử lý, và (2) dựng dataset cuối để lưu cho các bước mô hình hóa tiếp theo.
+
+\subsubsection{Tổng hợp cấu hình tốt nhất}
+Cấu hình được chọn cho từng bước là:
+\begin{itemize}
+    \item Điền khuyết: Mean cho benchmark số, kết hợp chiến lược theo ngữ cảnh nhóm cho dữ liệu thực tế.
+    \item Ngoại lai: Isolation Forest với contamination $=0.05$.
+    \item Chuẩn hóa: Robust Scaling.
+    \item Mã hóa: Binary Encoding.
+    \item Chọn đặc trưng: RFE (F1 cao và ổn định, khoảng 0.813).
+    \item Mất cân bằng lớp: SMOTE (F1-macro cao nhất khoảng 0.883).
+\end{itemize}
+
+Hai bước (chọn đặc trưng và cân bằng lớp) được dùng cho quá trình huấn luyện mô hình, không phải là biến đổi bắt buộc để xuất file dữ liệu tiền xử lý cuối.
+
+\subsubsection{Tạo dataset tiền xử lý cuối}
+Pipeline xuất dữ liệu gồm 4 bước:
+\begin{enumerate}
+    \item Loại ngoại lai bằng \texttt{IsoForest\_0.05}.
+    \item Chuẩn hóa 8 biến số bằng \texttt{RobustScaler}.
+    \item Mã hóa nhị phân toàn bộ biến phân loại (trừ nhãn \textit{Depression}).
+    \item Đưa nhãn mục tiêu về cột cuối và lưu file kết quả.
+\end{enumerate}
+
+% Trong notebook, nhóm cũng kiểm tra lại số giá trị thiếu sau khi xuất file để đảm bảo dữ liệu sạch trước khi đưa vào giai đoạn mô hình hóa.
+
+\subsection{Kết luận}
+Từ toàn bộ hai notebook tabular (EDA và preprocessing), nhóm xây dựng pipeline đề xuất cho dữ liệu bảng gồm:
+\begin{enumerate}
+    \item Điền khuyết theo ngữ cảnh vai trò (Student/Working Professional) kết hợp benchmark RMSE.
+    \item Phát hiện ngoại lai bằng Isolation Forest (contamination $=0.05$).
+    \item Chuẩn hóa biến số bằng Robust Scaling.
+    \item Mã hóa biến phân loại theo chiến lược hỗn hợp (One-Hot cho low-cardinality, Binary cho high-cardinality).
+    \item Chọn đặc trưng bằng RF importance hoặc RFE để giữ tập biến gọn và ổn định.
+    \item Cân bằng lớp bằng SMOTE ở giai đoạn huấn luyện.
+\end{enumerate}
+
+Kết quả định lượng cho thấy pipeline này vừa kiểm soát tốt chất lượng dữ liệu (thiếu, ngoại lai, đa cộng tuyến), vừa duy trì hiệu năng mô hình ở mức cao với F1-macro tốt nhất 0.883 trên bài toán phân loại \textit{Depression}. Do đó, pipeline tabular được chọn làm cấu hình chuẩn cho các bước mô hình hóa phía sau.
