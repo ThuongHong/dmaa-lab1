@@ -1,17 +1,291 @@
 \section{Tiền xử lý dữ liệu chuỗi thời gian}
 
 \subsection{Dữ liệu sử dụng}
-Nhóm sử dụng bộ dữ liệu tiêu thụ điện Tây Ban Nha (\textit{Spain Energy Consumption Dataset}) cho phần chuỗi thời gian. Dữ liệu thô được lưu tại \texttt{data/raw/P4\_energy\_dataset.csv} và dữ liệu đã xử lý trung gian được lưu tại \texttt{data/processed/P4\_energy\_dataset\_processed.csv}.
+Nhóm sử dụng \href{https://www.kaggle.com/datasets/energy-consumption/spain-energy-consumption-dataset}{bộ dữ liệu tiêu thụ điện Tây Ban Nha (\textit{Spain Energy Consumption Dataset})} cho phần chuỗi thời gian.
 
-Tập dữ liệu có 35{,}064 quan sát theo tần suất giờ trong giai đoạn 2015--2019. Biến mục tiêu chính là tải điện (MW), đồng thời có các biến hỗ trợ theo ngữ cảnh thời gian để phục vụ bước nội suy, kiểm định tính dừng, trích xuất đặc trưng và dự báo một bước trước.
+Tập dữ liệu có $35.064$ quan sát theo tần suất giờ trong giai đoạn 2015--2019. Biến mục tiêu chính là tải điện (MW), đồng thời có các biến hỗ trợ theo ngữ cảnh thời gian để phục vụ bước nội suy, kiểm định tính dừng, trích xuất đặc trưng và dự báo một bước trước.
 
-Bộ dữ liệu này phù hợp với yêu cầu đề bài ở ba điểm: (i) đủ chiều dài chuỗi theo nhiều năm; (ii) có tính mùa vụ theo ngày và theo tuần; và (iii) có ý nghĩa thực tiễn rõ ràng cho bài toán tiền xử lý phục vụ dự báo.
+Bộ dữ liệu này phù hợp với yêu cầu đề bài ở ba điểm:
+\begin{itemize}
+    \item Đủ chiều dài chuỗi theo nhiều năm.
+    \item Có tính mùa vụ theo ngày và theo tuần.
+    \item Có ý nghĩa thực tiễn rõ ràng cho bài toán tiền xử lý phục vụ dự báo.
+\end{itemize}
 
-\subsection{Phân tích khám phá và chất lượng dữ liệu}
-Phần EDA chuỗi thời gian tập trung vào ba nhóm tín hiệu chính: xu hướng dài hạn, mùa vụ ngắn hạn theo chu kỳ ngày/tuần, và mức độ nhiễu theo từng giai đoạn. Ngoài các thống kê mô tả theo cửa sổ thời gian, nhóm sử dụng trực quan hóa theo khung giờ và theo ngày trong tuần để kiểm tra tính ổn định của chuỗi trước khi nội suy và biến đổi.
+\subsection{Phân tích khám phá chuỗi thời gian}
+Nhóm tập trung vào 4 câu hỏi chính:
+\begin{itemize}
+    \item Chuỗi có xu hướng dài hạn hay không?
+    \item Mùa vụ xuất hiện ở các chu kỳ nào?
+    \item Mức dao động thay đổi ra sao theo thời gian?
+    \item Chuỗi có thỏa điều kiện dừng để mô hình hóa trực tiếp hay không?
+\end{itemize}
+
+Kết quả chính từ notebook EDA thời gian cho thấy:
+\begin{itemize}
+    \item Biến \textit{total load actual} chỉ thiếu 36 điểm trên toàn bộ chuỗi (xấp xỉ 0.1\%), nên không làm méo cấu trúc tín hiệu tổng thể ở bước khám phá.
+    \item Time plot toàn giai đoạn cho thấy không có xu hướng tăng/giảm tuyến tính dài hạn rõ rệt, nhưng xuất hiện mùa vụ mạnh theo năm; khi phóng to theo tuần, chu kỳ ngày và khác biệt giữa ngày làm việc--cuối tuần thể hiện rõ.
+    \item ACF/PACF xác nhận tự tương quan mạnh ở các độ trễ ngắn và tại các bội số của 24 giờ, đồng thời xuất hiện dấu hiệu mùa vụ tuần (168 giờ).
+    \item Rolling mean và rolling std (cửa sổ 7/30/90 ngày) đều biến thiên theo thời gian, cho thấy chuỗi chưa dừng và cần biến đổi ở bước tiền xử lý tiếp theo.
+\end{itemize}
+
+\subsubsection{Time Plot}
+
+Time plot toàn giai đoạn 2015--2019 cho thấy chuỗi tải điện dao động quanh một mức trung bình tương đối ổn định, chưa ghi nhận xu hướng tuyến tính tăng/giảm dài hạn rõ rệt (Hình \ref{fig:time_plot_full}). Tuy nhiên, đường bao chuỗi lặp lại theo các nhịp lớn theo năm, phản ánh tác động mùa vụ vĩ mô (thời tiết và nhu cầu tiêu thụ theo mùa).
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{img/time_plot_full.png}
+    \caption{Time plot toàn giai đoạn 2015--2019 cho biến \textit{total load actual}.}
+    \label{fig:time_plot_full}
+\end{figure}
+
+Khi phóng to về tuần đầu năm 2015, cấu trúc chu kỳ ngắn hạn hiện rõ hơn:
+\begin{itemize}
+    \item Chu kỳ ngày (24 giờ): phụ tải giảm vào rạng sáng và tăng lên vào các khung giờ hoạt động cao trong ngày.
+    \item Chu kỳ tuần: biên độ tải ở ngày làm việc cao hơn đáng kể so với cuối tuần.
+    \item Hiệu ứng ngày lễ: các ngày lễ đầu năm tạo ra các điểm sụt phụ tải bất thường, khác với dao động tuần thông thường.
+\end{itemize}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{img/time_plot_week.png}
+    \caption{Time plot tuần đầu năm 2015 cho biến \textit{total load actual}.}
+    \label{fig:time_plot_week}
+\end{figure}
+
+Phân tích time-plot cho ta thấy các thành phần cấu trúc của chuỗi có đặc điểm:
+\begin{enumerate}
+    \item \textbf{Xu hướng (Trend)}: không rõ ràng, có thể coi là gần như không tồn tại trong giai đoạn này.
+    \item \textbf{Mùa vụ (Seasonality)}: rất rõ ràng ở cả chu kỳ ngày và tuần, với biên độ thay đổi theo mùa trong năm.
+    \item \textbf{Nhiễu và Hiệu ứng ngày lễ (Noise \& Holiday Effects)}: có dao động ngắn hạn và một số điểm bất thường (outliers) liên quan đến ngày lễ.
+    \item \textbf{Tính dừng (Stationarity)}: mặc dù phương sai tương đối đồng đều và không có xu hướng dài hạn, nhưng sẽ có những tính mùa vụ lồng ghép phức tạp khiến mean của chuỗi thay đổi liên tục theo thời gian. Do đó, có thể nói đây là chuỗi không dừng (non-stationary)
+\end{enumerate}
+
+\subsubsection{Phân tích tương quan ACF và PACF}
+
+Theo công thức thực nghiệm $\min(10\log_{10}n, n/5)$, số lag tối đa ban đầu xấp xỉ 45 (Hình \ref{fig:acf_pacf}). Tuy nhiên, do dữ liệu có tần suất giờ, nhóm mở rộng phân tích đến 168 lag để kiểm tra đầy đủ chu kỳ ngày (24 giờ) và tuần (168 giờ) (Hình \ref{fig:acf_pacf_extended}).
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{img/lag45.png}
+    \caption{ACF và PACF cho biến \textit{total load actual} với lag tối đa 45.}
+    \label{fig:acf_pacf}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{img/lag168.png}
+    \caption{ACF và PACF mở rộng đến lag 168 để kiểm tra mùa vụ ngày và tuần.}
+    \label{fig:acf_pacf_extended}
+\end{figure}
+
+
+Kết quả \textbf{ACF} cho thấy hệ số tự tương quan suy giảm chậm và duy trì ý nghĩa ở nhiều lag xa, hàm ý chuỗi có tính nhớ dài và chưa dừng. Đồng thời, các đỉnh lặp lại tại các bội số của 24 giờ củng cố bằng chứng về mùa vụ ngày; đỉnh tại vùng 168 giờ cho thấy mùa vụ tuần cũng hiện diện rõ.
+
+Ở \textbf{PACF}, các gai (spikes) lớn tập trung tại các lag đầu (đặc biệt lag 1 và 2), sau đó giảm nhanh, cho thấy ảnh hưởng trực tiếp chủ yếu đến từ lịch sử rất gần. Ngoài ra, sự xuất hiện gai đáng chú ý quanh lag 24 phản ánh tác động mùa vụ ngày lên quan sát hiện tại.
+
+Căn cứ vào PACF, khi xây dựng ma trận đặc trưng cho dự báo, ta cần bắt buộc tạo các biến trễ (lag features) ngắn hạn quan trọng lag $t-1, t-2$ và các lag có giá trị tương quan âm mạnh tại $t-3$ và đặc biệt là $t-24$ để nắm bắt được ảnh hưởng của chu kỳ ngày.
+
+\subsubsection{Rolling statistics}
+
+Rolling mean và rolling standard deviation được tính trên ba cửa sổ 168, 720 và 2160 giờ (tương ứng 7, 30 và 90 ngày) để đánh giá sự ổn định của kỳ vọng và phương sai theo thời gian.
+
+Quan sát trên rolling mean cho thấy khi tăng kích thước cửa sổ, nhiễu ngắn hạn được làm phẳng nhưng đường trung bình vẫn dao động có chu kỳ thay vì hội tụ về hằng số. Ở cửa sổ dài (90 ngày), đường trung bình thể hiện rõ các nhịp lên xuống vĩ mô theo mùa.
+
+Với rolling std, độ biến thiên cũng thay đổi theo thời gian: ở cửa sổ ngắn dao động mạnh, còn ở cửa sổ dài vẫn duy trì dạng dao động có cấu trúc. Điều này cho thấy phương sai của chuỗi không ổn định theo nghĩa thống kê.
+
+Như vậy, cả hai điều kiện dừng quan trọng (mean và variance bất biến theo thời gian) đều bị vi phạm. Đây là cơ sở để áp dụng bước ổn định phương sai (log/Box-Cox) kết hợp sai phân hoặc decomposition ở các bước tiền xử lý kế tiếp.
 
 \subsection{Các kỹ thuật tiền xử lý và đánh giá định lượng}
-Pipeline tiền xử lý cho dữ liệu chuỗi thời gian được tổ chức theo thứ tự: xử lý giá trị thiếu theo mốc thời gian, kiểm định tính dừng, tạo đặc trưng trễ (lag) và đặc trưng cuộn (rolling), sau đó đánh giá bằng các chỉ số lỗi dự báo ở bài toán một bước trước. Kết quả chi tiết của từng kỹ thuật được tổng hợp để chọn cấu hình tiền xử lý cân bằng giữa độ chính xác và tính ổn định theo thời gian.
+Pipeline tiền xử lý cho dữ liệu chuỗi thời gian được tổ chức theo thứ tự: xử lý giá trị thiếu theo mốc thời gian, kiểm định tính dừng và biến đổi, phân rã cấu trúc chuỗi, phát hiện dị thường, xây dựng ma trận đặc trưng, rồi đánh giá bằng bài toán dự báo một bước trước ($t+1$). Kết quả chi tiết từng bước được dùng để chọn cấu hình tiền xử lý tối ưu theo cả tiêu chí thống kê và hiệu năng dự báo.
 
-\subsection{Kết luận cho pipeline dữ liệu chuỗi thời gian}
-Từ các phân tích trên, pipeline đề xuất cho dữ liệu chuỗi thời gian gồm: chuẩn hóa trục thời gian theo tần suất giờ, nội suy có kiểm soát cho điểm thiếu, kiểm định tính dừng trước/sau biến đổi, xây dựng tập đặc trưng lag--rolling theo chu kỳ ngày và tuần, và đánh giá bằng nhóm chỉ số lỗi dự báo trước khi chuyển sang bước mô hình hóa.
+\subsubsection{Xử lý khoảng trống thời gian và nội suy}
+Nhóm chủ động loại bỏ ngẫu nhiên 5\% dữ liệu theo cơ chế MCAR để so sánh 5 phương pháp: Forward Fill, Linear, Polynomial bậc 2, Polynomial bậc 3 và Spline Cubic. Sai số được đánh giá trên đúng các vị trí bị che bằng MAE và RMSE; đồng thời kiểm định Ljung-Box được dùng để kiểm tra cấu trúc phần dư sau nội suy \cite{ljung1978measure,statsmodels_ljungbox}.
+
+Kết quả cho thấy:
+\begin{itemize}
+    \item \textbf{Forward Fill} kém nhất (MAE xấp xỉ 1160, RMSE xấp xỉ 1604), do không theo kịp độ cong tự nhiên của phụ tải theo giờ.
+    \item \textbf{Linear} cải thiện đáng kể (MAE xấp xỉ 427) nhưng vẫn chưa nắm bắt tốt phi tuyến cục bộ.
+    \item Nhóm phương pháp phi tuyến vượt trội; \textbf{Polynomial bậc 2} tốt nhất với MAE xấp xỉ 276.23 và RMSE xấp xỉ 508.74.
+    \item Với cả 5 phương pháp, p-value Ljung-Box đều lớn hơn 0.05 (khoảng 0.4889--0.9014), nghĩa là phần dư không còn tự tương quan có ý nghĩa thống kê.
+\end{itemize}
+
+Phân phối phần dư của phương pháp tốt nhất (Polynomial bậc 2) được thể hiện tại Hình \ref{fig:temporal_interpolation_compare}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/interpolation_residual_poly2.png}
+    \caption{Phân phối phần dư của phương pháp nội suy Polynomial bậc 2 tại các điểm thiếu MCAR 5\%.}
+    \label{fig:temporal_interpolation_compare}
+\end{figure}
+
+Từ đó, nhóm chọn \textbf{Polynomial bậc 2} làm cấu hình nội suy chính cho pipeline làm sạch dữ liệu lịch sử.
+
+\subsubsection{Kiểm định tính dừng và biến đổi chuỗi}
+Nhóm áp dụng ba kiểm định ADF, KPSS và Phillips-Perron (PP) đồng thời trên chuỗi gốc và các phiên bản biến đổi \cite{dickey1979distribution,kwiatkowski1992kpss,phillips1988pp,statsmodels_adfuller,statsmodels_kpss}.
+
+Các kết quả chính:
+\begin{itemize}
+    \item Chuỗi gốc chưa dừng; KPSS cho p-value chạm ngưỡng dưới 0.0100.
+    \item Biến đổi Logarithm đơn thuần chưa đủ; KPSS vẫn ở mức 0.0100.
+    \item Box-Cox tự chọn tham số $\lambda \approx 0.6341$, sau đó sai phân bậc 1 giúp chuỗi đạt dừng: KPSS chạm ngưỡng trên 0.1000, trong khi ADF và PP cho p-value rất nhỏ \cite{box1964transformation,scipy_boxcox}.
+    \item Sai phân bậc 2 không cần thiết vì có nguy cơ over-differencing và làm mất tín hiệu hữu ích.
+\end{itemize}
+
+Vì vậy, biến đổi được chốt cho bước sau là \textbf{Box-Cox + sai phân bậc 1}.
+
+\subsubsection{Phân rã chuỗi thời gian}
+Nhóm so sánh Additive, Multiplicative và STL với chu kỳ tuần $168$ giờ (phù hợp dữ liệu theo giờ). Chỉ số đánh giá là tỉ lệ phương sai phần dư \cite{cleveland1990stl,statsmodels_stl}:
+\[
+    \mathrm{RVR} = \frac{\mathrm{Var}(R_t)}{\mathrm{Var}(y_t)}.
+\]
+
+Kết quả:
+\begin{itemize}
+    \item Additive: $\mathrm{RVR}=0.7200$ (khả năng bóc tách cấu trúc thấp).
+    \item Multiplicative: $\mathrm{RVR}=0.0000$ (kết quả không đáng tin cậy về mặt thực tiễn, có dấu hiệu artifact).
+    \item STL: $\mathrm{RVR}=0.3319$ (hợp lý và tốt nhất trong ba phương pháp).
+\end{itemize}
+
+Cấu trúc các thành phần sau phân rã được minh họa tại Hình \ref{fig:temporal_stl_decomposition}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{img/stl_decomposition_168h.png}
+    \caption{Kết quả STL decomposition với chu kỳ tuần 168 giờ trên chuỗi đã làm sạch.}
+    \label{fig:temporal_stl_decomposition}
+\end{figure}
+
+Theo đó, nhóm sử dụng \textbf{STL decomposition} để lấy các chuỗi dẫn xuất: \texttt{stl\_trend}, \texttt{stl\_seasonal}, \texttt{stl\_resid}, \texttt{deseasonalized}, \texttt{detrend} cho các bước tiếp theo.
+
+\subsection{Feature Engineering \& Phát hiện dị thường}
+\subsubsection{Phát hiện dị thường}
+Trên dữ liệu đã làm sạch, nhóm triển khai ba hướng: Z-score trên chuỗi deseasonalized, Isolation Forest trên đặc trưng rolling 24h, và ngưỡng $3\sigma$ trên phần dư STL.
+
+Số lượng điểm dị thường phát hiện được:
+\begin{itemize}
+    \item Z-score: 662 điểm.
+    \item Isolation Forest (contamination $=0.01$): 350 điểm.
+    \item STL Residual Thresholding: 1055 điểm.
+\end{itemize}
+
+Phân bố điểm dị thường theo từng phương pháp được minh họa tại Hình \ref{fig:temporal_anomaly_compare}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{img/anomaly_methods_comparison.png}
+    \caption{So sánh các điểm dị thường được phát hiện bởi Z-score, Isolation Forest và ngưỡng phần dư STL.}
+    \label{fig:temporal_anomaly_compare}
+\end{figure}
+
+STL Residual Thresholding nhạy nhất với các cú sốc ngoại sinh (ngày lễ, thời tiết cực đoan) và được chọn làm lớp phát hiện dị thường chính để phục vụ phân tích rủi ro.
+
+\subsubsection{Xây dựng ma trận đặc trưng thời gian}
+Từ dữ liệu sau tiền xử lý, nhóm xây dựng bộ đặc trưng cho dự báo $t+1$ gồm:
+\begin{itemize}
+    \item \textbf{Lag features:} $t-1, t-2, t-3, t-24$ (theo PACF).
+    \item \textbf{Rolling features:} mean/std/min/max tại các cửa sổ 6h, 24h, 168h.
+    \item \textbf{Cyclic encoding:} sin/cos cho giờ trong ngày, thứ trong tuần, tháng trong năm.
+    \item \textbf{Calendar feature:} cờ ngày lễ Tây Ban Nha.
+    \item \textbf{Decomposition-based features:} thành phần trend/seasonal từ STL.
+    \item \textbf{Stationary feature:} chuỗi sai phân bậc 1 sau Box-Cox.
+\end{itemize}
+
+Việc kết hợp các lớp đặc trưng này giúp mô hình đồng thời học được động học ngắn hạn, cấu trúc chu kỳ và biến thiên theo bối cảnh lịch.
+
+\subsection{Đánh giá pipeline}
+\subsubsection{Đánh giá pipeline bằng dự báo một bước}
+Để kiểm định chất lượng toàn bộ pipeline, nhóm huấn luyện Random Forest Regressor trên dạng supervised $t+1$, chia tập theo thời gian (năm cuối làm test) \cite{breiman2001random,sklearn_rf}.
+
+Kết quả trên tập test:
+\begin{itemize}
+    \item MAE $=304.15$ MW.
+    \item RMSE $=505.03$ MW.
+\end{itemize}
+
+Với mức phụ tải trung bình khoảng 28{,}700 MW, sai số MAE vào khoảng 1\%, cho thấy pipeline tiền xử lý tạo ra không gian đặc trưng đủ tốt để mô hình nền đạt hiệu năng dự báo cao.
+
+Phân tích feature importance cũng nhất quán với EDA trước đó:
+\begin{itemize}
+    \item \texttt{load} chi phối mạnh nhất (xấp xỉ 89.51\%).
+    \item \texttt{diff\_1} đứng thứ hai (xấp xỉ 5.04\%).
+    \item Cặp \texttt{hour\_cos}, \texttt{hour\_sin} xác nhận vai trò chu kỳ ngày.
+\end{itemize}
+
+Top đặc trưng quan trọng nhất của mô hình được thể hiện tại Hình \ref{fig:temporal_feature_importance}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/rf_feature_importance_top10.png}
+    \caption{Top 10 đặc trưng quan trọng nhất của mô hình Random Forest cho bài toán dự báo $t+1$.}
+    \label{fig:temporal_feature_importance}
+\end{figure}
+
+\subsubsection{Phân tích nhân quả Granger đa biến}
+Nhóm kiểm định Granger ở lag 3 trên các chuỗi đã được chuẩn hóa tính dừng (bao gồm \texttt{ts\_diff} cho tải và sai phân bậc 1 cho các biến ngoại sinh) \cite{granger1969causal}.
+
+Các quan hệ nổi bật theo F-statistic:
+\begin{itemize}
+    \item $\text{load} \rightarrow \text{solar}$: 947.4.
+    \item $\text{load} \rightarrow \text{price}$: 872.0.
+    \item $\text{price} \rightarrow \text{load}$: 670.3.
+    \item $\text{solar} \rightarrow \text{load}$: 633.9.
+    \item $\text{load} \rightarrow \text{gas}$: 544.6.
+\end{itemize}
+
+Nhóm biến gió có F-stat thấp hơn đáng kể, cho thấy tính độc lập cao hơn so với các biến còn lại. Kết quả này củng cố luận điểm rằng tải tiêu thụ và giá điện có cơ chế dẫn dắt hai chiều theo thời gian, và các nguồn phát linh hoạt như khí đóng vai trò cân bằng hệ thống.
+
+Ma trận độ mạnh nhân quả Granger giữa các biến được trình bày tại Hình \ref{fig:temporal_granger_heatmap}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/granger_heatmap_lag3.png}
+    \caption{Ma trận độ mạnh nhân quả Granger (F-statistic) với lag 3 trên dữ liệu đã chuẩn hóa tính dừng.}
+    \label{fig:temporal_granger_heatmap}
+\end{figure}
+
+Bảng \ref{tab:temporal_pipeline_summary} tổng hợp các kết quả định lượng chính cho từng bước trong pipeline tiền xử lý chuỗi thời gian, cung cấp cái nhìn tổng quan về hiệu quả của từng kỹ thuật đã triển khai.
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|p{3.2cm}|p{4.1cm}|p{5.1cm}|}
+        \hline
+        \textbf{Bước} & \textbf{Lựa chọn}           & \textbf{Kết quả chính}                                                 \\
+        \hline
+        Nội suy thiếu & Polynomial bậc 2            & MAE $\approx 276.23$, RMSE $\approx 508.74$; Ljung-Box p-value $>0.05$ \\
+        \hline
+        Ổn định chuỗi & Box-Cox + sai phân bậc 1    & $\lambda \approx 0.6341$; KPSS từ 0.0100 lên 0.1000                    \\
+        \hline
+        Phân rã       & STL (period $=168$)         & RVR thấp nhất hợp lý: 0.3319                                           \\
+        \hline
+        Dị thường     & STL residual thresholding   & Phát hiện 1055 điểm bất thường                                         \\
+        \hline
+        Dự báo $t+1$  & Random Forest (baseline)    & MAE $=304.15$ MW; RMSE $=505.03$ MW                                    \\
+        \hline
+        Granger       & Lag 3, dữ liệu dừng đa biến & Quan hệ mạnh giữa load, price, solar, gas                              \\
+        \hline
+    \end{tabular}
+    \caption{Tổng hợp kết quả định lượng cho pipeline tiền xử lý chuỗi thời gian}
+    \label{tab:temporal_pipeline_summary}
+\end{table}
+
+\subsection{Kết luận}
+Từ toàn bộ ba notebook temporal, nhóm đã xây dựng một pipeline tiền xử lý hoàn chỉnh cho dữ liệu chuỗi thời gian gồm các bước:
+\begin{enumerate}
+    \item Chuẩn hóa trục thời gian theo giờ.
+    \item Điền thiếu bằng Polynomial bậc 2.
+    \item Ổn định chuỗi bằng Box-Cox + sai phân bậc 1.
+    \item Phân rã STL theo chu kỳ 168 giờ.
+    \item Phát hiện dị thường dựa trên phần dư STL.
+    \item Xây dựng đặc trưng lag--rolling--cyclic--calendar.
+    \item Đánh giá bằng dự báo một bước trước ($t+1$).
+\end{enumerate}
+
+Kết quả định lượng cho thấy pipeline này vừa đảm bảo tính đúng đắn thống kê (chuỗi đạt dừng sau biến đổi, phân rã tách được cấu trúc rõ ràng), vừa cho hiệu năng dự báo tốt trên dữ liệu thực tế với bài toán một bước trước (MAE 304.15 MW, RMSE 505.03 MW).
+
+% \subsubsection*{Hạn chế}
+% Mặc dù kết quả khả quan, phần temporal vẫn còn một số hạn chế:
+% \begin{itemize}
+%     \item Mô hình mới được kiểm chứng ở bài toán \textbf{dự báo một bước trước} ($t+1$), chưa đánh giá bài toán nhiều bước (multi-step), nên chưa phản ánh đầy đủ kịch bản dự báo dài hạn.
+%     \item Phần đánh giá dự báo mới dùng mô hình baseline Random Forest, chưa so sánh hệ thống với các mô hình chuỗi thời gian khác (ARIMA/SARIMA, Prophet, LSTM, XGBoost/LightGBM).
+%     \item Thí nghiệm thiếu dữ liệu dựa trên kịch bản MCAR 5\% là giả lập; trong triển khai thực tế, missing pattern có thể phức tạp hơn (MAR/MNAR), làm giảm hiệu quả nội suy.
+%     \item Phân tích Granger hiện chủ yếu dựa trên cường độ F-statistic; để kết luận chặt chẽ hơn cần báo cáo đầy đủ p-value, kiểm soát đa kiểm định và kiểm tra độ ổn định theo nhiều độ trễ.
+%     \item Chưa tích hợp sâu các biến ngoại sinh quan trọng (nhiệt độ, sự kiện đặc biệt, lịch vận hành), nên mô hình vẫn có thể sai số cao ở các giai đoạn biến động đột ngột.
+% \end{itemize}
