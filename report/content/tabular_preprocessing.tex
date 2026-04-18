@@ -1,7 +1,7 @@
 \section{Tiền xử lý dữ liệu dạng bảng}
 
 \subsection{Dữ liệu sử dụng}
-Nhóm sử dụng \textit{Mental Health Survey Dataset} cho phần dữ liệu bảng. Tập huấn luyện có $140.700$ bản ghi, gồm các nhóm thuộc tính nhân khẩu học, học tập/công việc và thói quen sinh hoạt, với nhãn mục tiêu \textit{Depression}. Bộ dữ liệu này thỏa đầy đủ tiêu chí đề bài: quy mô lớn, có đồng thời thuộc tính số và phân loại, và có tỉ lệ thiếu cao ở một số biến.
+Nhóm sử dụng \href{https://www.kaggle.com/competitions/playground-series-s4e11/data}{\textit{Mental Health Survey Dataset}} cho phần dữ liệu bảng. Tập huấn luyện có $140.700$ bản ghi, gồm các nhóm thuộc tính nhân khẩu học, học tập/công việc và thói quen sinh hoạt, với nhãn mục tiêu \textit{Depression}. Bộ dữ liệu này thỏa đầy đủ tiêu chí đề bài: quy mô lớn, có đồng thời thuộc tính số và phân loại, và có tỉ lệ thiếu cao ở một số biến.
 
 \begin{table}[H]
     \centering
@@ -127,24 +127,47 @@ Ngoài One-Hot và Ordinal, nhóm triển khai thêm Target Encoding (K-fold), B
 Vì vậy, ở bước tạo dataset cuối, nhóm chọn Binary Encoding cho toàn bộ biến phân loại để tối ưu đa cộng tuyến và giữ số chiều ở mức hợp lý.
 
 \subsubsection{Lựa chọn và giảm chiều đặc trưng}
-Nhóm tổ chức bài toán chọn đặc trưng theo hai tầng: \textbf{chọn lọc} (MI, RF importance, RFE) và \textbf{giảm chiều} (PCA), đánh giá bằng F1-score cross-validation 5-fold với cùng bộ phân lớp Logistic Regression để đảm bảo công bằng (\cite{guyon2002gene,jolliffe2002pca,breiman2001random}).
+Đây là bước bắt buộc và được triển khai theo đúng 3 tầng để đảm bảo cả hiệu năng lẫn khả năng diễn giải mô hình (\cite{guyon2002gene,jolliffe2002pca,breiman2001random}). Toàn bộ phương pháp được đánh giá thống nhất bằng \textbf{F1-score 5-fold cross-validation} với cùng mô hình Logistic Regression để so sánh công bằng.
 
-Kết quả định lượng theo số chiều $k$:
+\textbf{Tầng 1 -- Lọc thống kê:}
 \begin{itemize}
-    \item $k=5$: RF 0.746, MI 0.713, PCA 0.724; RFE ổn định quanh 0.813.
-    \item $k=10$: RF 0.809 (cao hơn MI 0.784 và PCA 0.747).
-    \item $k\geq 15$: MI, RF, RFE đều hội tụ quanh 0.813; PCA đạt 0.816 tại $k=20$.
+    \item \textbf{ANOVA F-test} cho thuộc tính số: đo mức tách lớp theo trung bình giữa các lớp.
+    \item \textbf{Chi-square test} cho thuộc tính phân loại đã mã hóa không âm: kiểm tra mức phụ thuộc giữa biến và nhãn.
+    \item \textbf{Mutual Information (MI)} cho toàn bộ đặc trưng: đo phụ thuộc phi tuyến, không giả định quan hệ tuyến tính.
 \end{itemize}
 
-Diễn giải chuyên sâu từ kết quả này:
+\textbf{Tầng 2 -- Lọc dựa trên mô hình:}
 \begin{itemize}
-    \item RF importance cho hiệu quả tốt khi cần tập biến nhỏ (vùng $k\leq10$).
-    \item MI là filter đơn biến nên tăng chậm hơn khi dữ liệu có tương tác phi tuyến giữa thuộc tính.
-    \item PCA có thể đạt điểm cao ở $k$ lớn, nhưng giảm khả năng diễn giải trực tiếp theo thuộc tính gốc.
-    \item RFE cho hiệu năng cao và ổn định trên toàn dải $k$, phù hợp mục tiêu cân bằng giữa độ chính xác và khả năng giải thích.
+    \item \textbf{Random Forest importance} và \textbf{Gradient Boosting importance}: xếp hạng đặc trưng theo mức đóng góp vào giảm lỗi phân tách.
+    \item \textbf{RFE/RFECV}: loại dần đặc trưng kém quan trọng với cross-validation để tìm tập biến gọn nhưng vẫn giữ hiệu năng.
 \end{itemize}
 
-Vì mục tiêu của pipeline tabular là vừa dự báo tốt vừa giữ tính diễn giải, nhóm chọn \textbf{RFE} làm cấu hình mặc định cho bước chọn đặc trưng; đồng thời dùng RF importance như baseline đối chiếu khi cần rút gọn nhanh theo ngưỡng $k$. Đường cong F1 theo số chiều được trình bày trong Hình \ref{fig:tabular_feature_selection_f1}.
+\textbf{Tầng 3 -- Giảm chiều:}
+\begin{itemize}
+    \item \textbf{PCA}: nén thông tin vào các thành phần chính và kiểm tra ngưỡng phương sai tích lũy (90\%, 95\%, 99\%).
+    \item \textbf{t-SNE}: trực quan hóa không gian đặc trưng 2D để quan sát mức tách cụm lớp.
+    \item \textbf{UMAP (khuyến nghị cho dữ liệu lớn)}: trong notebook hiện tại, nhóm dừng ở t-SNE do đã lấy mẫu 15{,}000 điểm cho huấn luyện và 3{,}000 điểm cho trực quan hóa; với quy mô lớn hơn, UMAP là lựa chọn phù hợp để giảm chi phí tính toán và giữ cấu trúc lân cận tốt hơn.
+\end{itemize}
+
+Kết quả định lượng F1-score theo số lượng đặc trưng $k$:
+\begin{itemize}
+    \item $k=5$: MI = 0.713, RF = 0.746, PCA = 0.724, RFE = 0.813.
+    \item $k=10$: MI = 0.784, RF = 0.809, PCA = 0.747, RFE = 0.813.
+    \item $k=15$: MI = 0.812, RF = 0.813, PCA = 0.813, RFE = 0.813.
+    \item $k=20$: MI = 0.813, RF = 0.813, PCA = 0.816, RFE = 0.813.
+\end{itemize}
+
+Nhận xét chuyên sâu:
+\begin{itemize}
+    \item Ở vùng ít đặc trưng ($k\leq10$), RF importance vượt MI rõ rệt, cho thấy lợi thế khi có tương tác phi tuyến.
+    \item RFE cho F1 cao và ổn định trên toàn dải $k$, chứng tỏ tập đặc trưng được chọn có tính bền vững.
+    \item PCA bắt kịp ở $k$ lớn (tối đa 0.816 tại $k=20$), phù hợp khi mục tiêu chính là nén chiều hơn là diễn giải theo biến gốc.
+    \item Sau $k\geq15$, hiệu năng gần bão hòa, hàm ý thêm đặc trưng không còn cải thiện đáng kể.
+\end{itemize}
+
+$\rightarrow$ \textbf{Kết luận lựa chọn:} cho pipeline tabular chính, nhóm ưu tiên \textbf{RFE} vì cân bằng tốt giữa độ chính xác, độ ổn định và khả năng giải thích; RF importance được dùng làm baseline nhanh cho bài toán rút gọn đặc trưng, còn PCA/t-SNE phục vụ giảm chiều và trực quan hóa.
+
+Biểu đồ so sánh hiệu năng theo số lượng đặc trưng được trình bày trong Hình \ref{fig:tabular_feature_selection_f1}.
 
 \begin{figure}[H]
     \centering
