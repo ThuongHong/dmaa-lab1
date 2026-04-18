@@ -1,0 +1,17 @@
+\section{Tiền xử lý dữ liệu chuỗi thời gian}
+
+\subsection{Dữ liệu sử dụng}
+Nhóm sử dụng bộ dữ liệu tiêu thụ điện Tây Ban Nha (\textit{Spain Energy Consumption Dataset}) cho phần chuỗi thời gian. Dữ liệu thô được lưu tại \texttt{data/raw/P4\_energy\_dataset.csv} và dữ liệu đã xử lý trung gian được lưu tại \texttt{data/processed/P4\_energy\_dataset\_processed.csv}.
+
+Tập dữ liệu có 35{,}064 quan sát theo tần suất giờ trong giai đoạn 2015--2019. Biến mục tiêu chính là tải điện (MW), đồng thời có các biến hỗ trợ theo ngữ cảnh thời gian để phục vụ bước nội suy, kiểm định tính dừng, trích xuất đặc trưng và dự báo một bước trước.
+
+Bộ dữ liệu này phù hợp với yêu cầu đề bài ở ba điểm: (i) đủ chiều dài chuỗi theo nhiều năm; (ii) có tính mùa vụ theo ngày và theo tuần; và (iii) có ý nghĩa thực tiễn rõ ràng cho bài toán tiền xử lý phục vụ dự báo.
+
+\subsection{Phân tích khám phá và chất lượng dữ liệu}
+Phần EDA chuỗi thời gian tập trung vào ba nhóm tín hiệu chính: xu hướng dài hạn, mùa vụ ngắn hạn theo chu kỳ ngày/tuần, và mức độ nhiễu theo từng giai đoạn. Ngoài các thống kê mô tả theo cửa sổ thời gian, nhóm sử dụng trực quan hóa theo khung giờ và theo ngày trong tuần để kiểm tra tính ổn định của chuỗi trước khi nội suy và biến đổi.
+
+\subsection{Các kỹ thuật tiền xử lý và đánh giá định lượng}
+Pipeline tiền xử lý cho dữ liệu chuỗi thời gian được tổ chức theo thứ tự: xử lý giá trị thiếu theo mốc thời gian, kiểm định tính dừng, tạo đặc trưng trễ (lag) và đặc trưng cuộn (rolling), sau đó đánh giá bằng các chỉ số lỗi dự báo ở bài toán một bước trước. Kết quả chi tiết của từng kỹ thuật được tổng hợp để chọn cấu hình tiền xử lý cân bằng giữa độ chính xác và tính ổn định theo thời gian.
+
+\subsection{Kết luận cho pipeline dữ liệu chuỗi thời gian}
+Từ các phân tích trên, pipeline đề xuất cho dữ liệu chuỗi thời gian gồm: chuẩn hóa trục thời gian theo tần suất giờ, nội suy có kiểm soát cho điểm thiếu, kiểm định tính dừng trước/sau biến đổi, xây dựng tập đặc trưng lag--rolling theo chu kỳ ngày và tuần, và đánh giá bằng nhóm chỉ số lỗi dự báo trước khi chuyển sang bước mô hình hóa.

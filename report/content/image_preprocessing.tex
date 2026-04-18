@@ -1,0 +1,67 @@
+\section{Tiền xử lý dữ liệu ảnh}
+
+\subsection{Dữ liệu sử dụng}
+Nhóm sử dụng tập ảnh phong cảnh gồm 6 lớp: \textit{buildings, forest, glacier, mountain, sea, street}. Tập dữ liệu gốc có 5{,}000 ảnh RGB kích thước 150\(\times\)150, tương ứng nhãn dạng số với 6 lớp.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|c|c|c|}
+        \hline
+        \textbf{Tiêu chí} & \textbf{Yêu cầu} & \textbf{Thực tế} & \textbf{Kết quả} \\
+        \hline
+        Số ảnh & $\geq 5{,}000$ & 5{,}000 & Đạt \\
+        \hline
+        Kích thước ảnh & Đồng nhất & 150\(\times\)150\(\times\)3 & Đạt \\
+        \hline
+        Số lớp & $\geq 5$ & 6 lớp & Đạt \\
+        \hline
+    \end{tabular}
+    \caption{Kiểm tra tiêu chí lựa chọn dữ liệu ảnh}
+\end{table}
+
+\subsection{Phân tích khám phá và chất lượng dữ liệu}
+\textbf{Phân bố lớp.} Tập dữ liệu có phân bố khá đều giữa các lớp. Số ảnh theo lớp lần lượt là: buildings (789), forest (778), glacier (863), mountain (870), sea (814), street (886). Tỉ lệ lớp lớn nhất/lớp nhỏ nhất là 1.14, nhỏ hơn ngưỡng 3, do đó dữ liệu được xem là cân bằng.
+
+\textbf{Phát hiện ảnh trùng.} Nhóm dùng perceptual hash (pHash) để dò ảnh trùng hoặc gần trùng. Kết quả phát hiện 7 ảnh trùng trên 5{,}000 ảnh (0.14\%). Sau khi loại trùng, tập dữ liệu còn 4{,}993 ảnh.
+
+\textbf{Độ sáng và tương phản toàn cục.} Trên tập đã loại trùng, thống kê mức sáng và độ tương phản cho thấy biên độ biến thiên lớn, phù hợp với đặc thù dữ liệu cảnh ngoài trời.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|c|c|c|}
+        \hline
+        \textbf{Thuộc tính} & \textbf{Độ lệch chuẩn} & \textbf{Nhỏ nhất} & \textbf{Lớn nhất} \\
+        \hline
+        Độ sáng toàn cục & 30.8812 & 18.6553 & 210.4190 \\
+        \hline
+        Độ tương phản & 13.1707 & 13.6147 & 104.6476 \\
+        \hline
+    \end{tabular}
+    \caption{Thống kê độ sáng và độ tương phản trên 4{,}993 ảnh}
+\end{table}
+
+\subsection{Các kỹ thuật tiền xử lý và đánh giá định lượng}
+\textbf{Ablation theo kích thước ảnh.} Nhóm đánh giá pipeline cổ điển \textit{flatten + PCA-100 + Logistic Regression / k-NN} bằng 5-fold CV trên mẫu con 2{,}500 ảnh để chọn kích thước resize phù hợp.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|c|c|}
+        \hline
+        \textbf{Cấu hình} & \textbf{LogReg (mean $\pm$ std)} & \textbf{k-NN (mean $\pm$ std)} \\
+        \hline
+        Baseline 150\(\times\)150 & 0.4924 $\pm$ 0.0195 & 0.4640 $\pm$ 0.0194 \\
+        \hline
+        Resize 32\(\times\)32 & 0.4836 $\pm$ 0.0205 & 0.4676 $\pm$ 0.0165 \\
+        \hline
+        Resize 64\(\times\)64 & \textbf{0.4936 $\pm$ 0.0177} & \textbf{0.4672 $\pm$ 0.0186} \\
+        \hline
+        Resize 128\(\times\)128 & 0.4884 $\pm$ 0.0162 & 0.4648 $\pm$ 0.0207 \\
+        \hline
+    \end{tabular}
+    \caption{So sánh ablation theo kích thước ảnh (n=2{,}500, PCA-100, 5-fold CV)}
+\end{table}
+
+Dựa trên kết quả trên, nhóm chọn kích thước 64\(\times\)64 cho các bước xử lý và mô hình hóa tiếp theo vì cho hiệu năng tổng thể tốt nhất trong các cấu hình thử nghiệm.
+
+\subsection{Kết luận cho pipeline dữ liệu ảnh}
+Pipeline đề xuất cho dữ liệu ảnh gồm: (i) loại ảnh trùng bằng pHash, (ii) resize ảnh về 64\(\times\)64, (iii) chuẩn bị đặc trưng phù hợp mô hình (ví dụ flatten + PCA cho mô hình cổ điển). Quy trình này giữ được cân bằng lớp, giảm nhiễu dữ liệu trùng và tối ưu chi phí tính toán so với dùng ảnh gốc 150\(\times\)150.

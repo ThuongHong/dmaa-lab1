@@ -1,10 +1,8 @@
 \section{Giới thiệu}
-Báo cáo này trình bày quá trình thực hiện Đồ án 1 môn Khai thác dữ liệu, tập trung vào các bước tiền xử lý dữ liệu cho hai loại dữ liệu chính: dữ liệu bảng (Tabular Data) và dữ liệu thời gian (Temporal Data).
+Báo cáo này trình bày quá trình tiền xử lý dữ liệu cho ba nhóm bài toán của đồ án: dữ liệu ảnh, dữ liệu bảng và dữ liệu chuỗi thời gian. Trọng tâm của nhóm là triển khai các kỹ thuật theo đề bài, đo lường định lượng tác động của từng bước, và đưa ra lựa chọn cuối cùng dựa trên bằng chứng thực nghiệm.
 
-Mục tiêu của đồ án là áp dụng các kỹ thuật phân tích dữ liệu khám phá (EDA) và các phương pháp tiền xử lý tiên tiến để chuẩn bị dữ liệu cho các mô hình học máy sau này.
+Về dữ liệu ảnh, nhóm phân tích phân bố lớp, phát hiện ảnh trùng bằng perceptual hash, đánh giá độ sáng/độ tương phản và thực hiện ablation theo kích thước ảnh để chọn cấu hình tiền xử lý phù hợp. Về dữ liệu bảng, nhóm sử dụng bộ \textit{Mental Health Survey Dataset} để phân tích phân phối, cơ chế thiếu dữ liệu, đa cộng tuyến, và tác động của các chiến lược tiền xử lý đến hiệu năng phân loại. Về dữ liệu chuỗi thời gian, nhóm sử dụng dữ liệu tải điện Tây Ban Nha để đánh giá nội suy, kiểm định tính dừng, trích xuất đặc trưng, phát hiện dị thường, và kiểm chứng chất lượng dữ liệu đã xử lý thông qua bài toán dự báo một bước.
 
-\subsection{Dữ liệu sử dụng}
-\begin{itemize}
-    \item \textbf{Dữ liệu bảng (Tabular Data):} Bộ dữ liệu Khảo sát Sức khỏe Tâm thần (Mental Health Survey).
-    \item \textbf{Dữ liệu thời gian (Temporal Data):} Bộ dữ liệu Tiêu thụ Năng lượng tại Tây Ban Nha (Spain Energy Consumption).
-\end{itemize}
+Tiêu chí xuyên suốt của báo cáo là: (i) mỗi kỹ thuật đều có số đo định lượng đi kèm; (ii) kết luận được đưa ra từ so sánh có đối chứng; và (iii) kết quả có thể tái lập từ notebook và các file đầu ra trong thư mục \texttt{data/processed}.
+
+Thông tin dữ liệu sử dụng được trình bày trực tiếp trong subsection \textit{Dữ liệu sử dụng} của từng phần: dữ liệu ảnh, dữ liệu bảng và dữ liệu chuỗi thời gian.
