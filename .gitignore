@@ -218,3 +218,7 @@ report/main.synctex.gz
 report/main.toc
 
 *.png
+
+
+data/raw/intel_images
+*.blg
