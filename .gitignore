@@ -217,10 +217,10 @@ report/main.run.xml
 report/main.synctex.gz
 report/main.toc
 
-*.png
+# *.png
 
 
 data/raw/intel_images
 *.blg
 /report/output
-*.blg
+# *.blg
