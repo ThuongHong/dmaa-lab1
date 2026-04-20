@@ -25,7 +25,7 @@ Kết quả chính từ notebook EDA thời gian cho thấy:
 \begin{itemize}
     \item Biến \textit{total load actual} chỉ thiếu 36 điểm trên toàn bộ chuỗi (xấp xỉ 0.1\%), nên không làm méo cấu trúc tín hiệu tổng thể ở bước khám phá.
     \item Time plot toàn giai đoạn cho thấy không có xu hướng tăng/giảm tuyến tính dài hạn rõ rệt, nhưng xuất hiện mùa vụ mạnh theo năm; khi phóng to theo tuần, chu kỳ ngày và khác biệt giữa ngày làm việc--cuối tuần thể hiện rõ.
-    \item ACF/PACF xác nhận tự tương quan mạnh ở các độ trễ ngắn và tại các bội số của 24 giờ, đồng thời xuất hiện dấu hiệu mùa vụ tuần (168 giờ).
+    \item ACF/PACF xác nhận tự tương quan mạnh ở các độ trễ ngắn và tại các bội số của 24 giờ, đồng thời xuất hiện dấu hiệu mùa vụ tuần (168 giờ) (\cite{box2015time}).
     \item Rolling mean và rolling std (cửa sổ 7/30/90 ngày) đều biến thiên theo thời gian, cho thấy chuỗi chưa dừng và cần biến đổi ở bước tiền xử lý tiếp theo.
 \end{itemize}
 
@@ -61,6 +61,8 @@ Phân tích time-plot cho ta thấy các thành phần cấu trúc của chuỗi
 \end{enumerate}
 
 \subsubsection{Phân tích tương quan ACF và PACF}
+
+Trong đó, ACF (Autocorrelation Function) đo mức tương quan giữa chuỗi hiện tại với các giá trị quá khứ theo từng độ trễ, còn PACF (Partial Autocorrelation Function) đo tương quan trực tiếp tại mỗi độ trễ sau khi đã loại ảnh hưởng của các lag trung gian (\cite{box2015time}).
 
 Theo công thức thực nghiệm $\min(10\log_{10}n, n/5)$, số lag tối đa ban đầu xấp xỉ 45 (Hình \ref{fig:acf_pacf}). Tuy nhiên, do dữ liệu có tần suất giờ, nhóm mở rộng phân tích đến 168 lag để kiểm tra đầy đủ chu kỳ ngày (24 giờ) và tuần (168 giờ) (Hình \ref{fig:acf_pacf_extended}).
 \begin{figure}[H]
@@ -99,6 +101,15 @@ Pipeline tiền xử lý cho dữ liệu chuỗi thời gian được tổ chứ
 
 \subsubsection{Xử lý khoảng trống thời gian và nội suy}
 Nhóm chủ động loại bỏ ngẫu nhiên 5\% dữ liệu theo cơ chế MCAR để so sánh 5 phương pháp: Forward Fill, Linear, Polynomial bậc 2, Polynomial bậc 3 và Spline Cubic. Sai số được đánh giá trên đúng các vị trí bị che bằng MAE và RMSE; đồng thời kiểm định Ljung-Box được dùng để kiểm tra cấu trúc phần dư sau nội suy (\cite{ljung1978measure}).
+
+Vai trò của từng phương pháp nội suy trong thí nghiệm được diễn giải như sau:
+\begin{itemize}
+    \item \textbf{Forward Fill}: sao chép giá trị gần nhất trước đó cho điểm bị thiếu; đơn giản và nhanh nhưng dễ gây hiện tượng ``bậc thang'' khi chuỗi biến động mạnh.
+    \item \textbf{Linear}: nối tuyến tính giữa hai điểm quan sát lân cận; phù hợp khi biến thiên cục bộ gần tuyến tính.
+    \item \textbf{Polynomial bậc 2}: khớp đường cong bậc hai để bắt được độ cong vừa phải trong tín hiệu theo giờ.
+    \item \textbf{Polynomial bậc 3}: cho phép độ uốn linh hoạt hơn bậc hai nhưng có nguy cơ dao động cục bộ nếu dữ liệu nhiễu.
+    \item \textbf{Spline Cubic}: ghép nhiều đoạn đa thức bậc ba trơn liên tục, thường giữ tốt tính mượt của chuỗi nhưng nhạy với cấu hình biên.
+\end{itemize}
 
 Kết quả cho thấy:
 \begin{itemize}
@@ -174,7 +185,7 @@ Phát hiện dị thường được thực hiện sau khi chuỗi đã nội su
 \begin{itemize}
     \item \textbf{Z-score} trên chuỗi deseasonalized (ngưỡng $|z|>3$): bắt các điểm lệch mạnh theo chuẩn hóa toàn cục.
     \item \textbf{Isolation Forest} (contamination $=0.01$) trên đặc trưng rolling 24h: phát hiện dị thường theo hình học đa chiều cục bộ.
-    \item \textbf{STL residual thresholding} với ngưỡng $3\sigma$: nhắm trực tiếp vào phần dư sau khi đã tách trend và seasonality.
+    \item \textbf{STL residual thresholding} (\cite{vallis2014anomaly}) với ngưỡng $3\sigma$: nhắm trực tiếp vào phần dư sau khi đã tách trend và seasonality.
 \end{itemize}
 
 Số lượng điểm dị thường phát hiện được:
