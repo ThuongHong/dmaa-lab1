@@ -184,7 +184,6 @@ Chuỗi thời gian:
 
 - Các notebook `01_EDA_image.ipynb` và `02_preprocess_image.ipynb` chứa luồng làm việc cho Google Colab.
 - Các notebook `_local.ipynb` phù hợp hơn khi chạy trực tiếp trong repo này.
-- File `environment.yml` hiện không còn trong thư mục dự án, nên cách chạy được tài liệu hóa theo `venv + requirements.txt`.
 
 ## License
 
