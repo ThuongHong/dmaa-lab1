@@ -20,6 +20,16 @@ Kết quả chính của dự án được thể hiện qua:
 - `23122034` - Lê Nguyên Khang
 - `23122036` - Nguyễn Ngọc Khoa
 
+## Bảng phân công công việc
+
+| MSSV     | Họ và tên            | Công việc                          |
+|----------|----------------------|------------------------------------|
+| 22120457 | Khưu Hải Châu        | Phân tích dữ liệu ảnh              |
+| 23122006 | Lưu Thượng Hồng      | Viết báo cáo, QA                   |
+| 23122020 | Nguyễn Thiên Ấn      | Viết báo cáo, QA                   |
+| 23122034 | Lê Nguyên Khang      | Phân tích dữ liệu dạng bảng        |
+| 23122036 | Nguyễn Ngọc Khoa     | Phân tích dữ liệu chuỗi thời gian  |
+
 ## Cấu trúc thư mục
 
 ```text
