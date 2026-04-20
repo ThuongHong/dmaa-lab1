@@ -205,22 +205,18 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
-report/main.aux
-report/main.bbl
-report/main.bbl-SAVE-ERROR
-report/main.bcf
-report/main.fdb_latexmk
-report/main.fls
-report/main.lof
-report/main.out
-report/main.run.xml
-report/main.synctex.gz
-report/main.toc
-
-# *.png
-
+docs/report/main.aux
+docs/report/main.bbl
+docs/report/main.bbl-SAVE-ERROR
+docs/report/main.bcf
+docs/report/main.fdb_latexmk
+docs/report/main.fls
+docs/report/main.lof
+docs/report/main.out
+docs/report/main.run.xml
+docs/report/main.synctex.gz
+docs/report/main.toc
+docs/report/output
 
 data/raw/intel_images
 *.blg
-/report/output
-# *.blg

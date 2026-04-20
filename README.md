@@ -1,130 +1,191 @@
-# CSC14004 - Data Mining - Project 1
-## Tiền xử lý dữ liệu (Data Preprocessing)
+# Data Mining Lab 1: Data Preprocessing
 
-### Thành viên nhóm
-| Tên | MSSV |
-|-----|------|
-| (Điền tên) | (Điền MSSV) |
+Dự án tập trung vào tiền xử lý và phân tích khám phá cho 3 loại dữ liệu:
 
----
+- `Dữ liệu ảnh`: phân tích và tiền xử lý tập ảnh phân loại cảnh.
+- `Dữ liệu bảng`: phân tích dữ liệu khảo sát sức khỏe tinh thần.
+- `Dữ liệu chuỗi thời gian`: tiền xử lý dữ liệu tải điện theo giờ.
 
-### Mô tả tập dữ liệu
+Kết quả chính của dự án được thể hiện qua:
 
-**Phần 2 – Dữ liệu bảng:** Mental Health Survey Dataset
-- **Nguồn:** Kaggle – Exploring Mental Health Data
-- **Kích thước:** 140,700 records (train)
-- **Thuộc tính:** 19 cột bao gồm thông tin nhân khẩu học, áp lực học tập/công việc, thói quen sinh hoạt
-- **Nhãn:** `Depression` (0: không, 1: có) — mất cân bằng lớp (~18% positive)
-- **Đặc điểm nổi bật:** Thiếu dữ liệu có cấu trúc (MAR) — sinh viên và người đi làm có tập thuộc tính khác nhau
-- **Files:**
-  - `data/raw/mental_health_train.csv` — Tập huấn luyện gốc (140,700 records)
-  - `data/raw/mental_health_test.csv` — Tập kiểm tra gốc
+- Các notebook trong thư mục `notebooks/`
+- Dữ liệu đầu ra trong `data/processed/`
+- Báo cáo tổng hợp tại `report/main.pdf`
 
----
+## Thành viên
 
-### Kết quả chính (Section 2.2)
+- `22120457` - Khưu Hải Châu
+- `23122006` - Lưu Thượng Hồng
+- `23122020` - Nguyễn Thiên Ấn
+- `23122034` - Lê Nguyên Khang
+- `23122036` - Nguyễn Ngọc Khoa
 
-#### 2.2.1 — Tiêu chí tập dữ liệu
-| Tiêu chí | Yêu cầu | Thực tế | Kết quả |
-|---|---|---|---|
-| Số records | ≥ 10,000 | 140,700 | ✓ |
-| Số thuộc tính | ≥ 10 | 17 features | ✓ |
-| Kết hợp số + phân loại | Có | 8 số + 9 phân loại | ✓ |
-| Tỉ lệ thiếu ≥ 5% | Có | 80.17% (Academic Pressure) | ✓ |
+## Cấu trúc thư mục
 
-#### 2.2.2 — EDA Chuyên Sâu
-- **Phân phối:** Tất cả 8 thuộc tính số đều KHÔNG chuẩn (D'Agostino-Pearson p≈0), kurtosis ≈ −1.2 (phân phối đều)
-- **Tương quan:** Age là predictor mạnh nhất với Depression (Pearson r=−0.565, Spearman ρ=−0.541)
-- **Giá trị thiếu:** Chủ yếu là MAR — sinh viên thiếu Work Pressure/Job Satisfaction; người đi làm thiếu Academic Pressure/CGPA/Study Satisfaction
-
-#### 2.2.3 — Tiền Xử Lý & Đánh Giá
-
-| Kỹ thuật | Phương pháp tốt nhất | Phương pháp tệ nhất | Ghi chú |
-|---|---|---|---|
-| (a) Điền khuyết | Mean (RMSE=5.78) | Mode (RMSE=9.03, +66%) | kNN/MICE = Mean trong đánh giá 1D |
-| (b) Ngoại lai | IsoForest (contamination=0.05) | — | KS test: tất cả phương pháp thay đổi phân phối đáng kể |
-| (c) Chuẩn hóa | Robust Scaling | Quantile Transform (mất cấu trúc) | Dữ liệu gần đều → Robust phù hợp hơn Z-score |
-| (d) Mã hóa | Binary Encoding (VIF=4.21) | Frequency (VIF=890) | Target Encoding cũng cao VIF=95 |
-| (e) Chọn đặc trưng | RF Importance (k=10: F1=0.809) | MI (k=5: F1=0.713) | Bão hòa tại k≥15 (F1≈0.813) |
-| (f) Cân bằng lớp | SMOTE (F1-macro=0.883) | Random Under-sampling (F1=0.866) | Baseline AUC-ROC=0.969 vẫn cạnh tranh |
-
----
-
-### Cấu trúc thư mục
-
-```
-DM/
-|-- README.md
-|-- requirements.txt
-|-- data/
-|   |-- raw/
-|   |   |-- mental_health_train.csv     # Dữ liệu gốc
-|   |   |-- mental_health_test.csv
-|   |-- processed/                      # Dữ liệu và kết quả sau tiền xử lý
-|       |-- after_imputation.csv        # Dataset sau điền khuyết
-|       |-- normality_results.csv       # Kết quả D'Agostino-Pearson
-|       |-- pearson_correlation.csv     # Ma trận tương quan Pearson
-|       |-- spearman_correlation.csv    # Ma trận tương quan Spearman
-|       |-- imputation_rmse.csv         # So sánh RMSE 5 chiến lược điền khuyết
-|       |-- outlier_ks_test.csv         # KS test sau loại ngoại lai
-|       |-- encoding_vif.csv            # VIF 5 phương pháp mã hóa
-|       |-- feature_selection_f1.csv    # F1 theo số lượng đặc trưng
-|       |-- imbalance_results.csv       # Kết quả SMOTE/ADASYN/RUS
-|       |-- *.png                       # Biểu đồ trực quan hóa
-|-- notebooks/
-|   |-- 03_EDA_tabular.ipynb           # Section 2.2.2: EDA chuyên sâu
-|   |-- 04_preprocessing_tabular.ipynb # Section 2.2.3: Tiền xử lý + đánh giá
-|-- docs/
-|   |-- Report.pdf                     # Báo cáo PDF
+```text
+.
+├── data/
+│   ├── raw/            # Dữ liệu gốc
+│   └── processed/      # Dữ liệu và hình ảnh sau tiền xử lý
+├── docs/
+│   ├── report/         # Mã nguồn LaTex
+│   └── Report.pdf      # Báo cáo
+├── notebooks/          # Notebook cho EDA và preprocessing
+│   ├──01_EDA_image_local.ipynb
+│   ├──01_EDA_image.ipynb
+│   ├──02_preprocess_image_local.ipynb
+│   ├──02_preprocess_image.ipynb
+│   ├──03_EDA_tabular.ipynb
+│   ├──04_preprocessing_tabular.ipynb
+│   ├──05_EDA_temporal.ipynb
+│   ├──06_preprocessing_temporal.ipynb
+│   └──07_feature-engineering_temporal.ipynb
+├── requirements.txt    # Danh sách thư viện Python
+└── README.md
 ```
 
----
+## Tài nguyên dữ liệu
 
-### Hướng dẫn cài đặt môi trường
+### 1. Dữ liệu ảnh
+
+- Tên bộ dữ liệu: `Intel Image Classification Dataset`
+- Nguồn tham khảo: [Hugging Face](https://huggingface.co/datasets/sfarrukhm/intel-image-classification)
+- Link tải nhanh nhóm đang dùng: [Google Drive](https://drive.google.com/drive/folders/1_Lsyg5JcQHV8w2sPigDQqSUlOBQ0Jp8a?usp=drive_link)
+- Thư mục local mong đợi: `data/raw/intel_images/`
+
+Notebook local:
+
+- `notebooks/01_EDA_image_local.ipynb`
+- `notebooks/02_preprocess_image_local.ipynb`
+
+Notebook Colab:
+
+- `notebooks/01_EDA_image.ipynb`
+- `notebooks/02_preprocess_image.ipynb`
+
+### 2. Dữ liệu bảng
+
+- Tên bộ dữ liệu: `Mental Health Survey Dataset`
+- Nguồn: [Kaggle Playground Series S4E11](https://www.kaggle.com/competitions/playground-series-s4e11/data)
+- File hiện có trong repo:
+  - `data/raw/mental_health_train.csv`
+  - `data/raw/mental_health_test.csv`
+
+Notebook:
+
+- `notebooks/03_EDA_tabular.ipynb`
+- `notebooks/04_preprocessing_tabular.ipynb`
+
+### 3. Dữ liệu chuỗi thời gian
+
+- Tên bộ dữ liệu: `Spain Energy Consumption Dataset`
+- Nguồn: [Kaggle - Hourly energy demand generation and weather](https://www.kaggle.com/datasets/nicholasjhana/energy-consumption-generation-prices-and-weather/?select=energy_dataset.csv)
+- File hiện có trong repo: `data/raw/P4_energy_dataset.csv`
+
+Notebook:
+
+- `notebooks/05_EDA_temporal.ipynb`
+- `notebooks/06_preprocessing_temporal.ipynb`
+- `notebooks/07_feature-engineering_temporal.ipynb`
+
+## Yêu cầu môi trường
+
+- `Python 3.12.13`
+- Khuyến nghị dùng `venv`
+- Hệ điều hành: Linux/macOS/WSL đều phù hợp
+
+Kiểm tra phiên bản Python:
 
 ```bash
-# Dùng conda (khuyến nghị)
-conda create -n dm_env python=3.11
-conda activate dm_env
-pip install -r requirements.txt
+python3 --version
+```
 
-# Hoặc virtualenv
-python -m venv venv
-source venv/bin/activate    # Linux/Mac
-venv\Scripts\activate       # Windows
-pip install -r requirements.txt
+Nếu máy có nhiều phiên bản Python, hãy dùng đúng `Python 3.12.13`.
 
-# Khởi động Jupyter
+## Hướng dẫn chạy
+
+### 1. Clone dự án
+
+```bash
+git clone <repo-url>
+cd lab1
+```
+
+### 2. Tạo môi trường ảo với Python 3.12.13
+
+```bash
+python3.12 -m venv .venv
+source .venv/bin/activate
+python --version
+```
+
+Kỳ vọng đầu ra:
+
+```text
+Python 3.12.13
+```
+
+### 3. Cài dependencies
+
+```bash
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+### 4. Chuẩn bị dữ liệu
+
+Repo đã kèm sẵn các file CSV cho dữ liệu bảng và chuỗi thời gian. Với dữ liệu ảnh, tải dataset về và đặt theo cấu trúc:
+
+```text
+data/raw/intel_images/
+├── train/
+└── test/
+```
+
+Nếu chỉ muốn chạy trên máy local, ưu tiên dùng các notebook có hậu tố `_local`.
+
+### 5. Mở Jupyter
+
+```bash
+jupyter lab
+```
+
+Hoặc:
+
+```bash
 jupyter notebook
 ```
 
-### Chạy notebook
+### 6. Thứ tự chạy notebook khuyến nghị
 
-1. Mở `notebooks/03_EDA_tabular.ipynb` — chạy **Kernel → Restart & Run All**
-2. Mở `notebooks/04_preprocessing_tabular.ipynb` — chạy **Kernel → Restart & Run All**
+```text
+Ảnh:
+1. notebooks/01_EDA_image_local.ipynb
+2. notebooks/02_preprocess_image_local.ipynb
 
-> **Lưu ý:** Chạy `03_EDA_tabular.ipynb` trước để sinh file `data/processed/column_info.json` cần thiết cho notebook 04.
+Dữ liệu bảng:
+1. notebooks/03_EDA_tabular.ipynb
+2. notebooks/04_preprocessing_tabular.ipynb
 
----
+Chuỗi thời gian:
+1. notebooks/05_EDA_temporal.ipynb
+2. notebooks/06_preprocessing_temporal.ipynb
+3. notebooks/07_feature-engineering_temporal.ipynb
+```
 
-### Phân công công việc
+## Đầu ra chính
 
-| Phần | Nội dung | Người thực hiện |
-|------|----------|-----------------|
-| 2.2.1 | Lựa chọn & kiểm tra tiêu chí tập dữ liệu | |
-| 2.2.2a | EDA: kiểm định phân phối D'Agostino-Pearson | |
-| 2.2.2b | EDA: phân tích tương quan Pearson + Spearman | |
-| 2.2.2c | EDA: phân tích giá trị thiếu + Little's MCAR | |
-| 2.2.3a | Xử lý giá trị thiếu (5 chiến lược + RMSE) | |
-| 2.2.3b | Phát hiện ngoại lai (IQR, Z-score, IsoForest, LOF, DBSCAN) | |
-| 2.2.3c | Chuẩn hóa dữ liệu + Levene's test + violin plots | |
-| 2.2.3d | Mã hóa biến phân loại (5 phương pháp + VIF) | |
-| 2.2.3e | Lựa chọn & giảm chiều đặc trưng + CV F1 | |
-| 2.2.3f | [Nâng cao] Xử lý mất cân bằng lớp (SMOTE, ADASYN, RUS) | |
+- `data/processed/final_preprocessed.csv`: tập dữ liệu bảng sau tiền xử lý
+- `data/processed/P4_energy_dataset_processed.csv`: dữ liệu chuỗi thời gian sau tiền xử lý
+- `data/processed/*.png`, `report/img/*.png`: các hình minh họa và kết quả đánh giá
+- `report/main.pdf`: báo cáo hoàn chỉnh
 
----
+## Ghi chú
 
-### Link tài nguyên
+- Các notebook `01_EDA_image.ipynb` và `02_preprocess_image.ipynb` chứa luồng làm việc cho Google Colab.
+- Các notebook `_local.ipynb` phù hợp hơn khi chạy trực tiếp trong repo này.
+- File `environment.yml` hiện không còn trong thư mục dự án, nên cách chạy được tài liệu hóa theo `venv + requirements.txt`.
 
-- Dataset: https://www.kaggle.com/competitions/playground-series-s4e11
-- Đề bài: `CSC14004 - Data Mining - P1.pdf`
+## License
+
+Dự án được phát hành theo giấy phép [MIT](LICENSE).
