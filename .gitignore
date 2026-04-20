@@ -222,3 +222,5 @@ report/main.toc
 
 data/raw/intel_images
 *.blg
+/report/output
+*.blg

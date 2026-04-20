@@ -1,67 +1,260 @@
 \section{Tiền xử lý dữ liệu ảnh}
 
 \subsection{Dữ liệu sử dụng}
-Nhóm sử dụng tập ảnh phong cảnh gồm 6 lớp: \textit{buildings, forest, glacier, mountain, sea, street}. Tập dữ liệu gốc có 5{,}000 ảnh RGB kích thước 150\(\times\)150, tương ứng nhãn dạng số với 6 lớp.
 
-\begin{table}[H]
-    \centering
-    \begin{tabular}{|l|c|c|c|}
-        \hline
-        \textbf{Tiêu chí} & \textbf{Yêu cầu} & \textbf{Thực tế} & \textbf{Kết quả} \\
-        \hline
-        Số ảnh & $\geq 5{,}000$ & 5{,}000 & Đạt \\
-        \hline
-        Kích thước ảnh & Đồng nhất & 150\(\times\)150\(\times\)3 & Đạt \\
-        \hline
-        Số lớp & $\geq 5$ & 6 lớp & Đạt \\
-        \hline
-    \end{tabular}
-    \caption{Kiểm tra tiêu chí lựa chọn dữ liệu ảnh}
-\end{table}
+Nhóm sử dụng tập dữ liệu \href{https://huggingface.co/datasets/sfarrukhm/intel-image-classification}{\textit{Intel Image Classification Dataset}} (\cite{intel_image_dataset}) cho phần dữ liệu ảnh. Đây là một dataset rất phổ biến cho bài toán image classification, gồm 6 classes là \textit{buildings, forest, glacier, mountain, sea, street}.
 
-\subsection{Phân tích khám phá và chất lượng dữ liệu}
-\textbf{Phân bố lớp.} Tập dữ liệu có phân bố khá đều giữa các lớp. Số ảnh theo lớp lần lượt là: buildings (789), forest (778), glacier (863), mountain (870), sea (814), street (886). Tỉ lệ lớp lớn nhất/lớp nhỏ nhất là 1.14, nhỏ hơn ngưỡng 3, do đó dữ liệu được xem là cân bằng.
-
-\textbf{Phát hiện ảnh trùng.} Nhóm dùng perceptual hash (pHash) để dò ảnh trùng hoặc gần trùng. Kết quả phát hiện 7 ảnh trùng trên 5{,}000 ảnh (0.14\%). Sau khi loại trùng, tập dữ liệu còn 4{,}993 ảnh.
-
-\textbf{Độ sáng và tương phản toàn cục.} Trên tập đã loại trùng, thống kê mức sáng và độ tương phản cho thấy biên độ biến thiên lớn, phù hợp với đặc thù dữ liệu cảnh ngoài trời.
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{|l|c|c|c|}
-        \hline
-        \textbf{Thuộc tính} & \textbf{Độ lệch chuẩn} & \textbf{Nhỏ nhất} & \textbf{Lớn nhất} \\
-        \hline
-        Độ sáng toàn cục & 30.8812 & 18.6553 & 210.4190 \\
-        \hline
-        Độ tương phản & 13.1707 & 13.6147 & 104.6476 \\
-        \hline
-    \end{tabular}
-    \caption{Thống kê độ sáng và độ tương phản trên 4{,}993 ảnh}
-\end{table}
-
-\subsection{Các kỹ thuật tiền xử lý và đánh giá định lượng}
-\textbf{Ablation theo kích thước ảnh.} Nhóm đánh giá pipeline cổ điển \textit{flatten + PCA-100 + Logistic Regression / k-NN} bằng 5-fold CV trên mẫu con 2{,}500 ảnh để chọn kích thước resize phù hợp.
+Tập dữ liệu đáp ứng được yêu cầu của đề bài. Tóm tắt thông tin tại bảng \ref{tab:image_data_criteria}.
 
 \begin{table}[H]
     \centering
     \begin{tabular}{|l|c|c|}
         \hline
-        \textbf{Cấu hình} & \textbf{LogReg (mean $\pm$ std)} & \textbf{k-NN (mean $\pm$ std)} \\
+        \textbf{Tiêu chí} & \textbf{Yêu cầu} & \textbf{Thực tế}            \\
         \hline
-        Baseline 150\(\times\)150 & 0.4924 $\pm$ 0.0195 & 0.4640 $\pm$ 0.0194 \\
+        Số ảnh            & $\geq 5{,}000$   & $\sim 25{,}000$             \\
         \hline
-        Resize 32\(\times\)32 & 0.4836 $\pm$ 0.0205 & 0.4676 $\pm$ 0.0165 \\
+        Kích thước ảnh    & Đồng nhất        & 150\(\times\)150\(\times\)3 \\
         \hline
-        Resize 64\(\times\)64 & \textbf{0.4936 $\pm$ 0.0177} & \textbf{0.4672 $\pm$ 0.0186} \\
-        \hline
-        Resize 128\(\times\)128 & 0.4884 $\pm$ 0.0162 & 0.4648 $\pm$ 0.0207 \\
+        Số lớp            & $\geq 5$         & 6 lớp                       \\
         \hline
     \end{tabular}
-    \caption{So sánh ablation theo kích thước ảnh (n=2{,}500, PCA-100, 5-fold CV)}
+    \caption{Kiểm tra tiêu chí lựa chọn dữ liệu ảnh}
+    \label{tab:image_data_criteria}
 \end{table}
 
-Dựa trên kết quả trên, nhóm chọn kích thước 64\(\times\)64 cho các bước xử lý và mô hình hóa tiếp theo vì cho hiệu năng tổng thể tốt nhất trong các cấu hình thử nghiệm.
+Mặc dù tập dữ liệu đã được chia sẵn thành train và test set, nhưng do yêu cầu của bài tập tập trung vào bước tiền xử lý và số lượng ảnh trong dataset khá lớn khiến thời gian tính toán bị kéo dài. Vì vậy, \textbf{trong phạm vi bài tập này, nhóm chỉ chọn ngẫu nhiên 5,000 ảnh từ tập train để tiến hành xử lý và đánh giá.}
 
-\subsection{Kết luận cho pipeline dữ liệu ảnh}
-Pipeline đề xuất cho dữ liệu ảnh gồm: (i) loại ảnh trùng bằng pHash, (ii) resize ảnh về 64\(\times\)64, (iii) chuẩn bị đặc trưng phù hợp mô hình (ví dụ flatten + PCA cho mô hình cổ điển). Quy trình này giữ được cân bằng lớp, giảm nhiễu dữ liệu trùng và tối ưu chi phí tính toán so với dùng ảnh gốc 150\(\times\)150.
+\subsection{Phân tích khám phá dữ liệu ảnh}
+
+\subsubsection{Phân phối giá trị pixel theo từng kênh màu}
+
+Nhóm phân tích phân phối cường độ pixel theo từng kênh màu RGB bằng biểu đồ KDE trên toàn bộ 5{,}000 ảnh (khoảng 1 triệu pixel được lấy mẫu ngẫu nhiên mỗi kênh), vì KDE làm nổi rõ hình dạng phân phối liên tục tốt hơn histogram rời rạc. Hình~\ref{fig:pixel_dist_kde} cho thấy kênh Lam (B) có hành vi đặc biệt: tồn tại hai đỉnh nhọn ở vùng tối ($\approx 0$) và vùng sáng ($\approx 250$), trong khi kênh Đỏ (R) và Kục (G) trải rộng đều hơn với mật độ tăng dần từ giá trị 0 đến khoảng 50--60 rồi duy trì khá ổn định suốt dải giữa. Đặc trưng hai đỉnh của kênh B phản ánh sự xuất hiện đồng thời của hai loại nền đối lập trong dataset: nền trời và tuyết sáng (pixel cao) cùng với pixel tối của rừng và đô thị. Sự khác biệt về hình dạng phân phối giữa các kênh chỉ ra rằng cả ba kênh không cùng tỷ lệ, dẫn đến rủi ro mô hình bị lệch theo kênh có phương sai lớn hơn nếu không chuẩn hóa. Do đó, bước tiền xử lý tiếp theo cần áp dụng chuẩn hóa đồng nhất từng kênh (per-channel normalization) để đảm bảo ba kênh đóng góp cân bằng vào quá trình học.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/image_eda/plot_00.png}
+    \caption{Phân phối mật độ giá trị pixel theo kênh màu (KDE)}
+    \label{fig:pixel_dist_kde}
+\end{figure}
+
+\subsubsection{Khám phá phân bố lớp}
+
+Nhóm đếm số lượng ảnh theo từng nhãn lớp và so sánh với ngưỡng mất cân bằng $3\times$ lớp ít nhất, vì mất cân bằng nghiêm trọng sẽ bóp méo đường quyết định phân loại. Hình~\ref{fig:class_imbalance} cho thấy cả 6 lớp (nhãn 0--5) có số lượng mẫu khá đồng đều, dao động trong khoảng 778--886 ảnh; lớp ít nhất có $\approx 778$ ảnh nên ngưỡng $3\times$ tương ứng là $\mathbf{2{,}334}$ (đường đỏ đứt nét trên biểu đồ). Tất cả các cột đều thấp hơn ngưỡng này rất nhiều, tỉ lệ max/min chỉ đạt 1.14, xác nhận tập dữ liệu ở trạng thái cân bằng lớp (balanced). Kết quả này hàm ý bộ phân loại sẽ không bị thiên vị về phía lớp chiếm đa số và không cần áp dụng class weighting hay oversampling (SMOTE) trong bước huấn luyện.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/image_eda/plot_02.png}
+    \caption{Biểu đồ số lượng mẫu theo từng thể loại nhãn ảnh}
+    \label{fig:class_imbalance}
+\end{figure}
+
+\subsubsection{Kiểm tra ảnh trùng lặp}
+
+Nhóm áp dụng thuật toán Perceptual Hash (pHash) để tính chỉ số băm rút gọn cho từng ảnh, từ đó so sánh khoảng cách Hamming giữa các cặp, vì pHash bền vững với nén ảnh và thay đổi sáng nhỏ mà hash giá trị thuần không phát hiện được. Quét toàn bộ 5{,}000 ảnh phát hiện 7 cặp trùng lặp (tỉ lệ 0.14\%), trong đó Hình~\ref{fig:dup_img_phash} minh họa một cặp điển hình: ảnh \textit{forest} tại Index 717 và Index 1052 gần như giống hệt nhau về bố cục và màu sắc (cùng cảnh rừng với thân cây và lá theo cùng góc nhìn). Tỉ lệ trùng lặp cực thấp (0.14\%) cho thấy chất lượng thu thập dữ liệu tốt, không có vấn đề hệ thống. Do đó, bước tiền xử lý chỉ cần loại bỏ 7 ảnh trùng này, đưa tập còn lại về 4{,}993 ảnh sạch trước khi tiếp tục.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{img/image_eda/plot_03.png}
+    \caption{Ví dụ minh họa ảnh phân tách trùng lặp bị phát hiện bằng thuật toán pHash}
+    \label{fig:dup_img_phash}
+\end{figure}
+
+\subsubsection{Độ sáng và tương phản theo lớp}
+
+Nhóm tính mean intensity (độ sáng trung bình) và standard deviation (độ tương phản) cho từng ảnh, sau đó vẽ boxplot phân lớp để quan sát sự khác biệt giữa các loại cảnh quan, vì các lớp có đặc tính chiếu sáng hoàn toàn khác nhau tùy bối cảnh. Hình~\ref{fig:brightness_contrast_boxplot} cho thấy rõ hai xu hướng đối lập: về độ sáng, \textit{glacier} và \textit{sea} có median $\approx 130$--$135$ (sáng nhất do tuyết và bầu trời), trong khi \textit{forest} có median $\approx 75$--$80$ (tối nhất do tán lá che phủ); về độ tương phản, \textit{mountain}, \textit{street} và \textit{buildings} có IQR và median cao hơn ($\approx 65$--$70$) so với \textit{sea}, \textit{glacier} và \textit{forest} ($\approx 55$--$60$). Sự phân tầng rõ rệt về độ sáng theo lớp chỉ ra rằng giá trị pixel thô mang thông tin phân biệt lớp, nhưng cũng đồng thời gây ra sự bất đồng nhất về phân phối nếu không chuẩn hóa. Do đó, bước chuẩn hóa tiếp theo cần đưa pixel về dải $[0, 1]$ hoặc áp dụng Z-score để các mô hình không bị chi phối bởi chênh lệch độ sáng tuyệt đối giữa các lớp.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/image_eda/plot_10.png}
+    \caption{Biểu đồ Hộp (Boxplot) thể hiện giá trị độ sáng trung bình và độ tương phản theo từng lớp ảnh}
+    \label{fig:brightness_contrast_boxplot}
+\end{figure}
+
+\subsection{Các kỹ thuật tiền xử lý ảnh và đánh giá định lượng}
+\subsubsection{Thay đổi kích thước ảnh}
+
+Nhóm resize toàn bộ 5{,}000 ảnh về 3 kích thước (32$\times$32, 64$\times$64, 128$\times$128) bằng\\ \texttt{skimage.transform.resize} với \texttt{anti\_aliasing=True}, sau đó upscale ngược về 150$\times$150 để tính SSIM (\cite{wang2004ssim}) và PSNR so với ảnh gốc, vì hai chỉ số này định lượng trực tiếp mức mất mát thông tin cấu trúc và pixel. Hình~\ref{fig:resize_visual} minh họa chất lượng thị giác của từng kích thước: ở 32$\times$32, ảnh phục hồi trở nên mờ hoàn toàn (SSIM $\approx$ 0.0007, PSNR $\approx -42.06$ dB); ở 64$\times$64, cấu trúc đường nét lớn vẫn còn nhận ra được dù bị làm mịn; ở 128$\times$128, ảnh phục hồi gần như trùng khớp ảnh gốc về mặt thị giác (SSIM $\approx$ 0.0008, PSNR $\approx -42.06$ dB).
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/image_preprocess/plot_00.png}
+    \caption{So sánh thị giác ảnh resize 32$\times$32 (SSIM=0.0007, PSNR=$-$42.06 dB) với ảnh gốc}
+    \label{fig:resize_visual}
+\end{figure}
+
+Kết quả ablation trong Bảng~\ref{tab:ablation_resize_nb} cho thấy LogReg đạt độ chính xác cao nhất ở 64$\times$64 (0.464 $\pm$ 0.031), vượt cả 32$\times$32 (0.461) và 128$\times$128 (0.459). Đây chứng tỏ 64$\times$64 là điểm cân bằng tối ưu giữa việc bảo toàn đặc trưng cần thiết và giảm chiều không gian đặc trưng (từ 67{,}500 xuống 12{,}288 chiều), nên được chọn làm kích thước chuẩn cho toàn pipeline.
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|c|c|c|c|}
+        \hline
+        \textbf{Cấu hình}       & \textbf{SSIM} & \textbf{PSNR (dB)} & \textbf{LogReg ($\pm$ std)} & \textbf{k-NN ($\pm$ std)}  \\
+        \hline
+        Baseline 150$\times$150 & ---           & ---                & 0.458 $\pm$ 0.032           & 0.401 $\pm$ 0.017          \\
+        \hline
+        Resize 32$\times$32     & 0.0007        & $-$42.06           & 0.461 $\pm$ 0.031           & 0.392 $\pm$ 0.019          \\
+        \hline
+        Resize 64$\times$64     & 0.0008        & $-$42.06           & \textbf{0.464 $\pm$ 0.031}  & \textbf{0.394 $\pm$ 0.019} \\
+        \hline
+        Resize 128$\times$128   & 0.0008        & $-$42.06           & 0.459 $\pm$ 0.031           & 0.396 $\pm$ 0.022          \\
+        \hline
+    \end{tabular}
+    \caption{Ablation kích thước ảnh: SSIM/PSNR và độ chính xác phân loại (n=1{,}000, PCA-50, 5-fold CV)}
+    \label{tab:ablation_resize_nb}
+\end{table}
+
+\subsubsection{Chuyển đổi không gian màu}
+
+Nhóm chuyển đổi tập ảnh sang 4 không gian màu (RGB, Grayscale, HSV (\cite{smith1978hsv}), LAB (\cite{cie1976lab})) rồi đo phương sai giải thích tích lũy (Cumulative Explained Variance) bằng PCA (\cite{jolliffe2002pca}) với $k=50$ thành phần, vì EV phản ánh khả năng nén thông tin hữu ích của không gian đặc trưng. Hình~\ref{fig:colorspace_compare} cho thấy cả 4 đường cong EV tích lũy tăng nhanh ban đầu rồi thoải dần; ở $k=50$, RGB đạt EV cao nhất là 71.46\%, tiếp theo là Grayscale (70.90\%), LAB (70.23\%), và HSV (67.88\%).
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/image_preprocess/plot_04.png}
+    \caption{So sánh 4 không gian màu: đường cong EV tích lũy PCA, EV@k=50, và độ chính xác phân loại}
+    \label{fig:colorspace_compare}
+\end{figure}
+
+Tuy nhiên, xét về độ chính xác phân loại (Bảng~\ref{tab:colorspace_ablation}), RGB đạt LogReg = 0.454 và HSV đạt k-NN cao nhất (0.433), trong khi Grayscale tụt mạnh xuống 0.372/0.328 do mất toàn bộ thông tin màu sắc. Thực tế rằng HSV có EV@50 thấp nhất (67.88\%) nhưng k-NN lại cao nhất cho thấy không gian HSV có thể tách biệt tốt hơn theo đặc trưng màu cục bộ trong không gian Euclidean. RGB được chọn cho pipeline vì cân bằng tốt giữa EV và hiệu năng, đồng thời là dạng lưu trữ gốc không cần biến đổi thêm.
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|c|c|c|}
+        \hline
+        \textbf{Không gian màu} & \textbf{EV@k=50 (\%)} & \textbf{LogReg}            & \textbf{k-NN}              \\
+        \hline
+        RGB                     & \textbf{71.46}        & \textbf{0.454 $\pm$ 0.028} & 0.401 $\pm$ 0.017          \\
+        \hline
+        Grayscale               & 70.90                 & 0.372 $\pm$ 0.031          & 0.328 $\pm$ 0.019          \\
+        \hline
+        HSV                     & 67.88                 & 0.446 $\pm$ 0.026          & \textbf{0.433 $\pm$ 0.029} \\
+        \hline
+        LAB                     & 70.23                 & 0.453 $\pm$ 0.032          & 0.393 $\pm$ 0.026          \\
+        \hline
+    \end{tabular}
+    \caption{So sánh không gian màu: EV tại PCA-50 và độ chính xác 5-fold CV (n=1{,}000)}
+    \label{tab:colorspace_ablation}
+\end{table}
+
+\subsubsection{Chuẩn hóa dữ liệu}
+
+Nhóm cài đặt và so sánh 4 phương pháp chuẩn hóa (Min-Max [0,1], Min-Max [$-$1,1], Z-score toàn tập, Z-score per-channel) bằng kiểm định Kolmogorov-Smirnov (KS test) (\cite{kolmogorov1933ks}) so với ảnh thô, vì KS stat định lượng mức độ dịch chuyển phân phối giữa trước và sau chuẩn hóa. Bảng~\ref{tab:normalization_ablation} cho thấy cả 3 phương pháp MinMax [0,1], MinMax [$-$1,1] và Z-score (global) đều đạt KS stat $= 0.978$, xác nhận phân phối pixel đã thay đổi hoàn toàn so với ảnh thô (KS stat = 0); Z-score per-channel thấp hơn một chút (KS stat = 0.974) do chuẩn hóa độc lập từng kênh làm tăng tính đặc thù kênh. Về độ chính xác phân loại, MinMax [0,1] và [$-$1,1] cùng đạt k-NN = 0.412 (cao nhất), trong khi Z-score (global) và per-channel không cải thiện so với ảnh thô. Kết quả này hàm ý MinMax đưa các ảnh sáng/tối về cùng dải giá trị giúp khoảng cách Euclidean trong k-NN trở nên có ý nghĩa hơn; Z-score global không hiệu quả vì phương sai lớn giữa các kênh không được xử lý riêng lẻ.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|r|r|c|c|}
+        \hline
+        \textbf{Phương pháp}  & \textbf{Mean} & \textbf{Std} & \textbf{KS stat} & \textbf{LogReg} & \textbf{k-NN}  \\
+        \hline
+        Raw [0,255]           & 113.55        & 70.76        & 0.000            & 0.458           & 0.401          \\
+        \hline
+        MinMax [0,1]          & 0.448         & 0.279        & 0.978            & 0.455           & \textbf{0.412} \\
+        \hline
+        MinMax [$-$1,1]       & $-$0.105      & 0.558        & 0.978            & 0.454           & \textbf{0.412} \\
+        \hline
+        Z-score (global)      & 0.000         & 1.000        & 0.978            & 0.454           & 0.401          \\
+        \hline
+        Z-score (per-channel) & 0.000         & 1.000        & 0.974            & 0.451           & 0.404          \\
+        \hline
+    \end{tabular}
+    \caption{So sánh phương pháp chuẩn hóa: KS stat so với ảnh thô và độ chính xác phân loại (n=1{,}000, PCA-50)}
+    \label{tab:normalization_ablation}
+\end{table}
+
+\subsubsection{Tăng cường dữ liệu (Data Augmentation)}
+
+Nhóm xây dựng pipeline augmentation gồm 5 phép biến đổi kết hợp bằng thư viện \texttt{Albumentations}: lật ngang ($p=0.5$), lật dọc ($p=0.3$), xoay $\pm 30^\circ$ ($p=0.5$), thêm nhiễu Gaussian ($p=0.5$), và điều chỉnh độ sáng/tương phản ngẫu nhiên ($p=0.5$). Ứng dụng augmentation trực tiếp lên tập huấn luyện và đánh giá bằng cùng pipeline PCA-50 + 5-fold CV cho thấy độ chính xác giảm mạnh: LogReg từ 0.458 xuống 0.311 ($-$14.7\%), k-NN từ 0.401 xuống 0.301 ($-$10.0\%). Hình~\ref{fig:augmentation_tsne} so sánh t-SNE 2D của tập gốc và tập augment trên 500 mẫu: cả hai đều thể hiện phân bố rải rác không có cụm rõ ràng, nhưng tập augment trải rộng và phân tán hơn trong không gian nhúng. Sự phân tán tăng lên này hàm ý augmentation mở rộng không gian đặc trưng hiệu quả, giúp mô hình học tính bất biến với lật/xoay nhưng đồng thời làm tăng độ khó hội tụ cho các phân loại tuyến tính đơn giản. Do đó, augmentation phù hợp làm kỹ thuật regularization cho mạng sâu (CNN) hơn là cho LogReg/k-NN trong pipeline hiện tại.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/image_preprocess/plot_05.png}
+    \caption{t-SNE 2D: Phân bố đặc trưng của tập gốc (trái) và sau augmentation (phải), tô màu theo nhãn lớp (n=500)}
+    \label{fig:augmentation_tsne}
+\end{figure}
+
+\subsubsection{Phân tích PCA trên không gian đặc trưng ảnh}
+
+Nhóm chiếu toàn bộ 5{,}000 ảnh (sau resize 64$\times$64 và chuẩn hóa) lên không gian PCA (\cite{jolliffe2002pca,turk1991eigenfaces}) với số thành phần tối đa, sau đó vẽ scree plot để xác định ngưỡng phương sai, vì phân tích này định lượng mức độ dư thừa (redundancy) trong không gian đặc trưng pixel. Hình~\ref{fig:pca_analysis} cho thấy scree plot có hình dạng ``khuỷu tay'' điển hình: PC1 và PC2 chiếm lần lượt $\approx$22\% và $\approx$14\% phương sai, rồi giảm dần nhanh về dưới 1\%; cần đến 348 thành phần để đạt 90\% phương sai, 538 thành phần cho 95\%, và 815 thành phần cho 99\%. Biểu đồ PCA 2D (EV = 35.7\%) và t-SNE 2D (\cite{vandermaaten2008tsne}) đều cho thấy 6 lớp đan xen nhau, không có vùng tách biệt rõ ràng; Silhouette score trên PCA-2D là $-$0.057 và trên t-SNE là $-$0.066, đều âm, xác nhận các lớp không tách biệt trong không gian đặc trưng pixel thô. Kết quả này hàm ý pixel flatten thiếu tính phân biệt (\textit{discriminative}) cần thiết cho bài toán phân loại cảnh tự nhiên; các kiến trúc trích xuất đặc trưng cục bộ (CNN, ViT) sẽ phù hợp hơn. Do đó, khi dùng pipeline PCA + mô hình tuyến tính,  nên chọn 50--100 thành phần (EV $\approx$ 55--63\%) như một sự đánh đổi hợp lý giữa tốc độ tính toán và thông tin bảo toàn.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/image_preprocess/plot_06.png}
+    \caption{(e) PCA: Scree plot tích lũy (90\%@348, 95\%@538, 99\%@815), Individual variance Top-50, chiếu PCA 2D/3D và t-SNE 2D tô màu theo lớp}
+    \label{fig:pca_analysis}
+\end{figure}
+
+\subsubsection{Phát hiện cạnh và phân tích đặc trưng cục bộ}
+
+Nhóm áp dụng 3 thuật toán phát hiện cạnh (Sobel (\cite{sobel1968sobel}), Prewitt, Canny (\cite{canny1986edge})) với 2 bộ siêu tham số mỗi loại trên toàn bộ 6{,}000 ảnh (5{,}000 gốc và augmented), tính Edge Density (tỉ lệ pixel cạnh/tổng pixel) theo từng lớp, rồi kiểm định sự khác biệt giữa các lớp bằng ANOVA một chiều (\cite{fisher1925anova}), vì nếu $p < 0.05$ thì mật độ cạnh mang thông tin phân biệt lớp. Hình~\ref{fig:edge_detection_visual} minh họa trực quan kết quả của từng thuật toán: Sobel và Prewitt tạo ra bản đồ gradient liên tục với cường độ cao ($\approx$0.55), trong khi Canny ($\sigma=1.0$) tạo cạnh nhị phân sắc nét và Canny ($\sigma=2.0$) lọc bỏ nhiều nhiễu hơn nhưng mất cạnh mịn.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/image_preprocess/plot_08.png}
+    \caption{So sánh thị giác các thuật toán phát hiện cạnh trên ảnh mẫu \textit{buildings}}
+    \label{fig:edge_detection_visual}
+\end{figure}
+
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[width=\textwidth]{img/image_preprocess/plot_08.png}
+%     \caption{Boxplot Edge Density theo lớp cho 6 cấu hình: ANOVA $p > 0.05$ trên tất cả (không có ý nghĩa thống kê)}
+%     \label{fig:edge_density_boxplot}
+% \end{figure}
+
+Tuy nhiên, theo Bảng~\ref{tab:anova_edge}, ANOVA một chiều cho kết quả $p > 0.05$ trên toàn bộ 6 cấu hình (F $\approx$ 0.7--0.9, $p \approx$ 0.47--0.61), bác bỏ giả thuyết rằng edge density trung bình khác nhau giữa các lớp. Nguyên nhân là các cảnh tự nhiên trong dataset đều có độ phức tạp cấu trúc tương đương nhau, nên mật độ cạnh trung bình toàn ảnh không phân biệt được cảnh rừng, băng tuyết, hay phố phường. Kết luận: edge density cục bộ là đặc trưng yếu cho bài toán này; cần sử dụng đặc trưng định hướng cạnh (HOG), đặc trưng kết cấu (LBP), hoặc đặc trưng sâu (CNN features) để đạt khả năng phân biệt lớp tốt hơn.
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|c|c|c|}
+        \hline
+        \textbf{Thuật toán}  & \textbf{F-stat} & \textbf{p-value} & \textbf{Kết luận}         \\
+        \hline
+        Sobel (magnitude)    & 0.92            & 0.469            & Không có ý nghĩa thống kê \\
+        \hline
+        Sobel (skimage)      & 0.73            & 0.601            & Không có ý nghĩa thống kê \\
+        \hline
+        Prewitt (magnitude)  & 0.91            & 0.476            & Không có ý nghĩa thống kê \\
+        \hline
+        Prewitt (skimage)    & 0.71            & 0.614            & Không có ý nghĩa thống kê \\
+        \hline
+        Canny ($\sigma=1.0$) & 0.92            & 0.469            & Không có ý nghĩa thống kê \\
+        \hline
+        Canny ($\sigma=2.0$) & 0.88            & 0.495            & Không có ý nghĩa thống kê \\
+        \hline
+    \end{tabular}
+    \caption{Kiểm định ANOVA một chiều cho Edge Density theo lớp ($p > 0.05$: không có ý nghĩa thống kê)}
+    \label{tab:anova_edge}
+\end{table}
+
+\subsubsection{Tổng kết Ablation Study}
+
+Nhóm hợp nhất toàn bộ kết quả ablation để chọn cấu hình tiền xử lý tối ưu cho pipeline cuối. Hình~\ref{fig:ablation_summary} tổng hợp độ chính xác của LogReg và k-NN trên 15 cấu hình thử nghiệm: các cấu hình resize, RGB, LAB và MinMax duy trì ổn định ở mức 44--46\% cho LogReg, trong khi Grayscale và Augmentation tụt mạnh xuống dưới 38\% và 31\%. Pipeline cuối cho dữ liệu ảnh được chốt: loại 7 ảnh trùng (pHash (\cite{zauner2010phash})) $\rightarrow$ resize về 64$\times$64 $\rightarrow$ chuẩn hóa MinMax [0,1] $\rightarrow$ flatten $\rightarrow$ PCA-50 (\cite{jolliffe2002pca}) $\rightarrow$ LogReg/k-NN. Kết quả đạt LogReg = 0.464 $\pm$ 0.031 trên 5-fold CV với 1{,}000 mẫu, hợp lý với bài toán 6 lớp cân bằng (baseline ngẫu nhiên = 16.7\%). Hạn chế chính: pipeline flatten ảnh về 1D mất hoàn toàn thông tin không gian cục bộ; với dữ liệu ảnh tự nhiên phức tạp, kiến trúc CNN hoặc bộ trích xuất đặc trưng sâu sẽ vượt trội đáng kể so với pipeline PCA + phân loại tuyến tính hiện tại.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/image_preprocess/plot_09.png}
+    \caption{Tổng kết Ablation Study: So sánh LogReg và k-NN CV Accuracy trên toàn bộ 15 cấu hình tiền xử lý}
+    \label{fig:ablation_summary}
+\end{figure}
+\subsection{Kết luận}
+
+Dựa trên kết quả ablation study toàn diện, nhóm xác định bộ thông số tiền xử lý tối ưu cho tập dữ liệu ảnh Intel Image Classification. Bảng~\ref{tab:pipeline_conclusion} tổng hợp lựa chọn cuối cùng và căn cứ định lượng cho từng quyết định. Pipeline được thiết kế nhằm tối ưu hóa hiệu năng phân loại tuyến tính trong giới hạn tính toán, đồng thời đảm bảo tính tái lập và minh bạch của các bước xử lý.
+
+\begin{table}[H]
+    \centering
+    \small
+    \begin{tabular}{|p{2.8cm}|p{3.5cm}|p{7cm}|}
+        \hline
+        \textbf{Kỹ thuật} & \textbf{Lựa chọn cuối}          & \textbf{Căn cứ định lượng}                                             \\
+        \hline
+        Kích thước resize & 64$\times$64                    & LogReg cao nhất (46.4\%); tăng lên 128$\times$128 không cải thiện thêm \\
+        \hline
+        Không gian màu    & RGB (hoặc LAB)                  & EV@50 = 71.46\%; LogReg $\approx$ 45.4\%; Grayscale tụt $-$18\%        \\
+        \hline
+        Chuẩn hóa         & Min-Max [0,1]                   & k-NN cao nhất (41.2\%), KS stat = 0.978; std thấp nhất                 \\
+        \hline
+        Loại ảnh trùng    & pHash (\cite{zauner2010phash})  & Phát hiện và loại 7 ảnh trùng ($\approx$0.14\% tập)                    \\
+        \hline
+        Giảm chiều        & PCA-50 (\cite{jolliffe2002pca}) & EV $\approx$ 55\%; đánh đổi hợp lý giữa tốc độ và thông tin bảo toàn   \\
+        \hline
+        Phân loại         & LogReg / k-NN                   & Baseline tuyến tính để đánh giá chất lượng đặc trưng                   \\
+        \hline
+    \end{tabular}
+    \caption{Tổng hợp lựa chọn pipeline tiền xử lý ảnh và căn cứ định lượng}
+    \label{tab:pipeline_conclusion}
+\end{table}
+
+Kết quả cuối cùng đạt LogReg = 0.464 $\pm$ 0.031 trên 5-fold CV (1{,}000 mẫu), vượt đáng kể so với baseline ngẫu nhiên 16.7\% của bài toán 6 lớp cân bằng. Hạn chế cốt lõi của pipeline hiện tại là việc flatten ảnh về vector 1D làm mất hoàn toàn thông tin không gian cục bộ (spatial context) --- thông tin vốn then chốt để phân biệt các cảnh tự nhiên phức tạp. Do đó, mặc dù pipeline PCA + phân loại tuyến tính đủ mạnh để đánh giá chất lượng đặc trưng, các kiến trúc trích xuất đặc trưng sâu hơn (CNN, ViT) sẽ là hướng phát triển tất yếu cho bài toán image classification đòi hỏi độ chính xác cao.
