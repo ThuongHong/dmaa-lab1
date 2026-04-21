@@ -1,5 +1,0 @@
-,Precision_macro,Recall_macro,F1_macro,AUC_ROC
-Baseline (No Resampling),0.897,0.8691,0.8821,0.9688
-SMOTE,0.8664,0.9035,0.8832,0.9686
-ADASYN,0.8525,0.9009,0.8735,0.9643
-Random Under-sampling,0.8356,0.9125,0.8655,0.9692
