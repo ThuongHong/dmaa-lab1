@@ -1,5 +1,7 @@
 # Data Mining Lab 1: Data Preprocessing
 
+Đường dẫn đến repo: [Tại đây](https://github.com/ThuongHong/dmaa-lab1.git)
+
 Dự án tập trung vào tiền xử lý và phân tích khám phá cho 3 loại dữ liệu:
 
 - `Dữ liệu ảnh`: phân tích và tiền xử lý tập ảnh phân loại cảnh.
